@@ -1,5 +1,6 @@
 #![allow(clippy::enum_variant_names)]
 
+use reqwest::StatusCode;
 use crate::error::response_error::ResponseError;
 
 pub mod response_error;
@@ -7,6 +8,7 @@ pub mod response_error;
 #[derive(Debug)]
 pub enum CapMonsterCloudClientError {
     InputOptionsError(OptionsError),
+    ClientImplError(ClientImplError),
 }
 
 #[derive(Debug)]
@@ -21,16 +23,36 @@ impl From<OptionsError> for CapMonsterCloudClientError {
 }
 
 #[derive(Debug)]
-pub enum HttpClientError {
+pub enum ClientImplError {
+    HttpClientCreationError(reqwest::Error),
+}
+
+#[derive(Debug)]
+pub enum SvcRequestError {
+    SerializeError(serde_json::Error),
     PostRequestError(reqwest::Error),
-    RawRespToTextError(reqwest::Error),
-    TextToStructError(serde_json::Error),
+    NonSuccessRespStatus(StatusCode),
+}
+
+#[derive(Debug)]
+pub enum SvcResponseError {
+    SerializeError(serde_json::Error),
+    DeserializeError(serde_json::Error),
+    RespToStringError(reqwest::Error),
+}
+
+#[derive(Debug)]
+pub enum DeserializeError {
+    SerializeError(serde_json::Error),
+    DeserializeError(serde_json::Error),
+    RespToStringError(reqwest::Error),
 }
 
 #[derive(Debug)]
 pub enum GetBalanceError {
-    StructToJsonError(serde_json::Error),
-    RequestError(HttpClientError),
+    SerializeError(serde_json::Error),
+    DeserializeError(SvcResponseError),
+    RequestError(SvcRequestError),
     GetResultError(ResponseError),
 }
 
@@ -42,18 +64,20 @@ pub enum SolveError {
 
 #[derive(Debug)]
 pub enum TaskCreationError {
-    RequestError(HttpClientError),
-    StructToJsonError(serde_json::Error),
+    RequestError(SvcRequestError),
+    SerializeError(serde_json::Error),
+    DeserializeError(SvcResponseError),
     InvalidResponse(ResponseError),
 }
 
 #[derive(Debug)]
 pub enum TaskResultError {
     InvalidResponse(&'static str),
-    RequestError(HttpClientError),
+    RequestError(SvcRequestError),
     RequestsLimitReached,
+    SerializeError(serde_json::Error),
+    DeserializeError(DeserializeError),
     GetResultTimeout,
-    StructToJsonError(serde_json::Error),
 }
 
 #[derive(Debug)]

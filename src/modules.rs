@@ -2,7 +2,7 @@
 
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Debug)]
 pub enum Modules {
     AMAZON,
     BOT_DETECT,

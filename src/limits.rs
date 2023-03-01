@@ -1,11 +1,12 @@
-#![allow(non_upper_case_globals)]
-
 use crate::requests::tasks_data::*;
-use crate::requests::TaskReqTrait;
 use std::marker::PhantomData;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+use crate::requests::tasks_names::TaskReqTrait;
 
 pub(crate) const REQUEST_TIMEOUT: Duration = Duration::from_secs(21);
+pub(crate) const HTTP2_KEEP_ALIVE_INTERVAL: Duration = Duration::from_secs(30);
+
+pub(crate) const TASK_REQUEST_MAX: u8 = 120;
 
 // request intervals in ms
 const ITT_REQUEST_INTERVAL: Duration = Duration::from_millis(200); // for ImageToTextTask
@@ -13,6 +14,7 @@ const RC_REQUEST_INTERVAL: Duration = Duration::from_secs(3);
 const FC_REQUEST_INTERVAL: Duration = Duration::from_secs(1);
 const HC_REQUEST_INTERVAL: Duration = Duration::from_secs(3);
 const GT_REQUEST_INTERVAL: Duration = Duration::from_secs(1);
+const T_REQUEST_INTERVAL: Duration = Duration::from_secs(1);
 
 // result timeouts
 const ITT_RESULT_TIMEOUT: Duration = Duration::from_secs(10);
@@ -20,6 +22,7 @@ const RC_RESULT_TIMEOUT: Duration = Duration::from_secs(180);
 const FC_RESULT_TIMEOUT: Duration = Duration::from_secs(80);
 const HC_RESULT_TIMEOUT: Duration = Duration::from_secs(80);
 const GT_RESULT_TIMEOUT: Duration = Duration::from_secs(80);
+const T_RESULT_TIMEOUT: Duration = Duration::from_secs(80);
 
 pub(crate) struct Limits<T: TaskReqTrait> {
     request_interval: Duration,
@@ -156,6 +159,26 @@ impl<'a> LimitsTrait for Limits<GeeTestTaskProxylessReq<'a>> {
         Self {
             request_interval: GT_REQUEST_INTERVAL,
             result_timeout: GT_RESULT_TIMEOUT,
+            __: PhantomData,
+        }
+    }
+}
+
+impl<'a> LimitsTrait for Limits<TurnstileTaskReq<'a>> {
+    fn new() -> Self {
+        Self {
+            request_interval: T_REQUEST_INTERVAL,
+            result_timeout: T_RESULT_TIMEOUT,
+            __: PhantomData,
+        }
+    }
+}
+
+impl<'a> LimitsTrait for Limits<TurnstileTaskProxylessReq<'a>> {
+    fn new() -> Self {
+        Self {
+            request_interval: T_REQUEST_INTERVAL,
+            result_timeout: T_RESULT_TIMEOUT,
             __: PhantomData,
         }
     }
