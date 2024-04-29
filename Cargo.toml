@@ -2,18 +2,24 @@
 name = "capmonster_cloud_client"
 version = "0.1.0"
 edition = "2021"
+# authors = ["ZennoLab<support@zennolab.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = { version = "0.11.13", features = ["json"] }
-tokio = { version = "1.23.0", features = ["full"] }
-serde = { version = "1.0.149", features = ["derive"] }
-serde_json = "1.0.89"
-serde_with_macros = "2.1.0"
+reqwest = { version = "0.11.24", features = ["json"] }
+tokio = { version = "1.36.0", features = ["full"] }
+serde = { version = "1.0.197", features = ["derive"] }
+serde_json = "1.0.114"
+serde_with_macros = "3.6.1"
 
-tracing = { version = "0.1.37", optional = true }
-tracing-subscriber = { version = "0.3.16", optional = true }
+tracing = { version = "0.1.40", optional = true }
+
+[dev-dependencies]
+tracing-subscriber = "0.3.18"
+base64 = "0.21.7"
+image = "0.24.9"
 
 [features]
-debug-output = ["dep:tracing", "dep:tracing-subscriber"]
+debug-output = ["dep:tracing"]
+keep-request-body = []

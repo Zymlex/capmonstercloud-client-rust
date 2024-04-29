@@ -1,14 +1,12 @@
 #![allow(clippy::enum_variant_names)]
 
+use crate::SvcErrorResp;
 use reqwest::StatusCode;
-use crate::error::response_error::ResponseError;
-
-pub mod response_error;
 
 #[derive(Debug)]
 pub enum CapMonsterCloudClientError {
     InputOptionsError(OptionsError),
-    ClientImplError(ClientImplError),
+    ClientImplError(RequestCreatorError),
 }
 
 #[derive(Debug)]
@@ -23,65 +21,72 @@ impl From<OptionsError> for CapMonsterCloudClientError {
 }
 
 #[derive(Debug)]
-pub enum ClientImplError {
-    HttpClientCreationError(reqwest::Error),
-}
-
-#[derive(Debug)]
-pub enum SvcRequestError {
-    SerializeError(serde_json::Error),
-    PostRequestError(reqwest::Error),
-    NonSuccessRespStatus(StatusCode),
-}
-
-#[derive(Debug)]
 pub enum SvcResponseError {
-    SerializeError(serde_json::Error),
-    DeserializeError(serde_json::Error),
-    RespToStringError(reqwest::Error),
+    GettingResultError(
+        SvcRespStructError,
+        #[cfg(feature = "keep-request-body")] String,
+    ),
+    SvcReturnErrorCode(SvcErrorResp),
 }
 
 #[derive(Debug)]
-pub enum DeserializeError {
-    SerializeError(serde_json::Error),
-    DeserializeError(serde_json::Error),
-    RespToStringError(reqwest::Error),
+pub enum RequestCreatorError {
+    HttpClientCreationError(reqwest::Error),
+    PostRequestError(reqwest::Error),
+    NonSuccessResponseStatus(StatusCode),
+    ResponseToStringError(reqwest::Error),
+    SerializationError(serde_json::Error),
+    DeserializationErrorError(serde_json::Error),
+    DeserializationSuccessError(serde_json::Error),
+}
+
+#[derive(Debug)]
+pub enum SvcRespStructError {
+    _ReportBug,
+    SuccessResponseWithoutData,
+}
+
+// TODO Remove all this From
+
+impl From<()> for SvcRespStructError {
+    fn from(_: ()) -> Self {
+        Self::_ReportBug
+    }
+}
+
+impl From<GetTaskError> for SvcRespStructError {
+    fn from(_: GetTaskError) -> Self {
+        Self::_ReportBug
+    }
 }
 
 #[derive(Debug)]
 pub enum GetBalanceError {
-    SerializeError(serde_json::Error),
-    DeserializeError(SvcResponseError),
-    RequestError(SvcRequestError),
-    GetResultError(ResponseError),
+    RequestError(RequestCreatorError),
 }
 
 #[derive(Debug)]
 pub enum SolveError {
-    TaskCreationError(TaskCreationError),
-    TaskResultError(TaskResultError),
-}
-
-#[derive(Debug)]
-pub enum TaskCreationError {
-    RequestError(SvcRequestError),
-    SerializeError(serde_json::Error),
-    DeserializeError(SvcResponseError),
-    InvalidResponse(ResponseError),
+    TaskCreationError(RequestCreatorError),
+    CreateTaskGetResultError(SvcResponseError),
+    GetTaskResultError(TaskResultError),
+    TaskResultError(SvcResponseError),
 }
 
 #[derive(Debug)]
 pub enum TaskResultError {
-    InvalidResponse(&'static str),
-    RequestError(SvcRequestError),
+    RequestError(RequestCreatorError),
+    BadStatusCode(StatusCode),
     RequestsLimitReached,
-    SerializeError(serde_json::Error),
-    DeserializeError(DeserializeError),
-    GetResultTimeout,
+    SerializationError(serde_json::Error),
+    GetResultFailed(RequestCreatorError),
+    GetResultTotalTimeout,
+    ReadyTaskWithoutSolution,
 }
 
 #[derive(Debug)]
 pub enum GetTaskError {
     Processing,
     ReadyTaskWithoutSolution,
+    UnsupportedStatus(String),
 }
