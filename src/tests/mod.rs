@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use crate::CapMonsterCloudClient;
-use crate::requests::tasks_data::{FunCaptchaTaskProxylessReq, ImageToTextTaskReq, NoCaptchaTaskProxylessReq};
+use crate::requests::tasks_data::*;
 
 #[tokio::test]
 async fn get_balance_async_check() {
@@ -43,9 +43,9 @@ async fn no_captcha_task_proxyless_check() {
 //     let cmc = CapMonsterCloudClient::new(env!("CMC_KEY")).unwrap();
 //     
 //     let obj = cmc.funcaptcha_task_proxyless(FunCaptchaTaskProxylessReq {
-//         websitePublicKey: "E8A75615-1CBA-5DFF-8032-D16BCF234E10",
-//         websiteURL: "https://account.battle.net/creation/flow/creation-full",
-//         funcaptchaApiJSSubdomain: Some("https://blizzard-api.arkoselabs.com"),
+//         websiteURL: "",
+//         websitePublicKey: "",
+//         funcaptchaApiJSSubdomain: Some(""),
 //         ..Default::default()
 //     }).await.unwrap();
 //     
@@ -53,3 +53,18 @@ async fn no_captcha_task_proxyless_check() {
 //     
 //     assert!(obj.token.len() > 0);
 // }
+
+#[tokio::test]
+async fn hcaptcha_task_proxyless_check() {
+    let cmc = CapMonsterCloudClient::new(env!("CMC_KEY")).unwrap();
+    
+    let obj = cmc.hcaptcha_task_proxyless(HCaptchaTaskProxylessReq {
+        websiteURL: "https://lessons.zennolab.com/captchas/hcaptcha/?level=alwayson",
+        websiteKey: "9730e4be-0997-4abd-aef3-bbdd241d211c",
+        ..Default::default()
+    }).await.unwrap();
+    
+    println!("{}", obj.gRecaptchaResponse);
+    
+    assert!(obj.gRecaptchaResponse.len() > 0);
+}

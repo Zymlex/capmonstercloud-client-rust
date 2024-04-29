@@ -1,84 +1,79 @@
 #![allow(non_snake_case)]
 
+use reqwest::StatusCode;
+use serde::de::DeserializeOwned;
 use serde::Deserialize;
-use crate::error::GetTaskError;
+use std::fmt::Debug;
+use std::marker::PhantomData;
+#[cfg(feature = "debug-output")]
+use tracing::warn;
 
-use crate::error::response_error::ResponseErrorVariants::*;
 use crate::error::response_error::*;
-use crate::responses::tasks_data::*;
+use crate::error::SvcResponseError;
 
 pub(crate) mod tasks_data;
 
-pub(crate) trait RespDataTrait: Clone {
+pub(crate) struct SvcResponse<T: SvcRespTypeTrait + DeserializeOwned> {
+    raw_resp: reqwest::Response,
+    #[allow(non_snake_case)]
+    __: PhantomData<T>,
+}
+
+impl<T: SvcRespTypeTrait + DeserializeOwned> SvcResponse<T> {
+    pub(crate) fn new(raw_resp: reqwest::Response) -> Self {
+        Self {
+            raw_resp,
+            __: PhantomData,
+        }
+    }
+
+    pub(crate) async fn deserialize(self) -> Result<T, SvcResponseError> {
+        let resp_str = self
+            .raw_resp
+            .text()
+            .await
+            .map_err(SvcResponseError::RespToStringError)?;
+
+        #[cfg(feature = "debug-output")]
+        warn!("Original response:\n'{}'", &resp_str);
+
+        let resp =
+            serde_json::from_str::<T>(&resp_str).map_err(SvcResponseError::SerializeError)?;
+
+        #[cfg(feature = "debug-output")]
+        warn!("Response as object:\n'{:?}'", resp);
+
+        Ok(resp)
+    }
+}
+
+pub(crate) trait SvcRespTypeTrait: Clone + Debug {
     type Result;
-    
+
     fn get_task_result(&self) -> Self::Result;
 }
 
 #[derive(Deserialize, Debug)]
-pub(crate) struct Response<T: RespDataTrait> {
-    #[cfg(feature = "reserve_response_body")]
-    body: String,
+pub(crate) struct SvcResponseStruct<T: SvcRespTypeTrait> {
     errorId: u32,
+    // https://zennolab.atlassian.net/wiki/spaces/APIS/pages/295396
+    // https://zennolab.atlassian.net/wiki/spaces/APIS/pages/295310
     errorCode: Option<String>,
     errorDescription: Option<String>,
     #[serde(flatten)]
-    flatten: Option<T>,
+    flat_data: Option<T>,
 }
 
-impl<'a, T: RespDataTrait> Response<T> {
-    pub(crate) fn get_result(&'a self) -> Result<T, ResponseError> {
+impl<'a, T: SvcRespTypeTrait> SvcResponseStruct<T> {
+    fn get_result(&'a self) -> Result<T, ResponseError> {
         if self.errorId == 0 {
-            if let Some(r) = self.flatten.clone() {
+            if let Some(r) = self.flat_data.clone() {
                 Ok(r)
             } else {
-                Err(ResponseError::new(
-                    SuccessResponseWithoutData,
-                    #[cfg(feature = "reserve_response_body")]
-                    self.body.clone(),
-                ))
+                Err(ResponseError::SuccessResponseWithoutData)
             }
         } else {
-            Err(ResponseError::new(
-                Error(ErrorInfo::new(
-                    self.errorCode.clone(),
-                    self.errorDescription.clone(),
-                )),
-                #[cfg(feature = "reserve_response_body")]
-                self.body.clone(),
-            ))
+            Err(ResponseError::Error)
         }
     }
 }
-
-pub(crate) trait ResponseTrait {
-    // fn get_result<T: RespDataTrait>(&self) -> Result<T, ResponseError>;
-}
-
-impl ResponseTrait for Response<GetTaskResultResp<ImageToTextTaskResp>> {
-    // fn get_result<T>(&self) -> Result<T, ResponseError> {
-    //     self.get_result()?.get_task_result()
-    // }
-}
-
-impl ResponseTrait for Response<GetTaskResultResp<NoCaptchaTaskProxylessResp>> {}
-
-impl ResponseTrait for Response<GetTaskResultResp<NoCaptchaTaskResp>> {}
-
-impl ResponseTrait for Response<GetTaskResultResp<RecaptchaV3TaskProxylessResp>> {}
-
-impl ResponseTrait for Response<GetTaskResultResp<RecaptchaV2EnterpriseTaskResp>> {}
-
-impl ResponseTrait for Response<GetTaskResultResp<RecaptchaV2EnterpriseTaskProxylessResp>> {}
-
-impl ResponseTrait for Response<GetTaskResultResp<FunCaptchaTaskResp>> {}
-
-impl ResponseTrait for Response<GetTaskResultResp<FunCaptchaTaskProxylessResp>> {}
-
-impl ResponseTrait for Response<GetTaskResultResp<HCaptchaTaskResp>> {}
-
-impl ResponseTrait for Response<GetTaskResultResp<HCaptchaTaskProxylessResp>> {}
-
-impl ResponseTrait for Response<GetTaskResultResp<GeeTestTaskResp>> {}
-
-impl ResponseTrait for Response<GetTaskResultResp<GeeTestTaskProxylessResp>> {}

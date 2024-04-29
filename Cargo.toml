@@ -17,4 +17,3 @@ tracing-subscriber = { version = "0.3.16", optional = true }
 
 [features]
 debug-output = ["dep:tracing", "dep:tracing-subscriber"]
-reserve_response_body = []

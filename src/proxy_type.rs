@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-#[derive(Serialize, Default)]
+#[derive(Serialize, Default, Clone, Debug)]
 pub enum ProxyType {
     #[default]
     Http,
