@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 
 use serde::Serialize;
+use serde_with_macros::skip_serializing_none;
 
 use crate::modules::Modules;
 use crate::proxy_type::ProxyType;
@@ -46,6 +47,7 @@ impl<'a> TaskReqTrait for GeeTestTaskReq<'a> {}
 
 impl<'a> TaskReqTrait for GeeTestTaskProxylessReq<'a> {}
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 pub struct ImageToTextTaskReq<'a> {
     pub body: &'a str,
@@ -56,6 +58,7 @@ pub struct ImageToTextTaskReq<'a> {
     pub math: Option<bool>,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 pub struct NoCaptchaTaskProxylessReq<'a> {
     pub websiteURL: &'a str,
@@ -65,6 +68,7 @@ pub struct NoCaptchaTaskProxylessReq<'a> {
     pub cookies: Option<&'a str>,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 pub struct NoCaptchaTaskReq<'a> {
     pub websiteURL: &'a str,
@@ -79,6 +83,7 @@ pub struct NoCaptchaTaskReq<'a> {
     pub cookies: Option<&'a str>,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 pub struct RecaptchaV3TaskProxylessReq<'a> {
     pub websiteURL: &'a str,
@@ -87,6 +92,7 @@ pub struct RecaptchaV3TaskProxylessReq<'a> {
     pub pageAction: Option<&'a str>,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 pub struct RecaptchaV2EnterpriseTaskReq<'a> {
     pub websiteURL: &'a str,
@@ -102,6 +108,7 @@ pub struct RecaptchaV2EnterpriseTaskReq<'a> {
     pub cookies: Option<&'a str>,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 pub struct RecaptchaV2EnterpriseTaskProxylessReq<'a> {
     pub websiteURL: &'a str,
@@ -110,6 +117,7 @@ pub struct RecaptchaV2EnterpriseTaskProxylessReq<'a> {
     pub apiDomain: Option<&'a str>,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 pub struct FunCaptchaTaskReq<'a> {
     pub websiteURL: &'a str,
@@ -125,6 +133,7 @@ pub struct FunCaptchaTaskReq<'a> {
     pub cookies: Option<&'a str>,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 pub struct FunCaptchaTaskProxylessReq<'a> {
     pub websiteURL: &'a str,
@@ -133,6 +142,7 @@ pub struct FunCaptchaTaskProxylessReq<'a> {
     pub data: Option<&'a str>,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 pub struct HCaptchaTaskReq<'a> {
     pub websiteURL: &'a str,
@@ -148,6 +158,7 @@ pub struct HCaptchaTaskReq<'a> {
     pub cookies: Option<&'a str>,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 pub struct HCaptchaTaskProxylessReq<'a> {
     pub websiteURL: &'a str,
@@ -158,6 +169,7 @@ pub struct HCaptchaTaskProxylessReq<'a> {
     pub cookies: Option<&'a str>,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 pub struct GeeTestTaskReq<'a> {
     pub websiteURL: &'a str,
@@ -174,6 +186,7 @@ pub struct GeeTestTaskReq<'a> {
     pub cookies: Option<&'a str>,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 pub struct GeeTestTaskProxylessReq<'a> {
     pub websiteURL: &'a str,

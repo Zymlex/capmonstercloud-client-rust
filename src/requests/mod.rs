@@ -6,12 +6,23 @@ pub(crate) mod tasks_data;
 
 #[derive(Serialize)]
 pub(crate) struct CreateTaskRequest<'a, T: TaskReqTrait> {
-    pub(crate) clientKey: &'a str,
-    pub(crate) task: TaskData<'a, T>,
+    clientKey: &'a str,
+    task: TaskData<'a, T>,
     // pub(crate) callbackUrl: Option<&'a str>,
+    softId: u32,
 }
 
-pub(crate) trait TaskReqTrait: Serialize {}
+impl<'a, T: TaskReqTrait> CreateTaskRequest<'a, T> {
+    pub(crate) fn new(clientKey: &'a str, task: TaskData<'a, T>, softId: u32) -> CreateTaskRequest<'a, T> {
+        Self {
+            clientKey,
+            task,
+            softId,
+        }
+    }
+}
+
+pub trait TaskReqTrait: Serialize {}
 
 #[derive(Serialize)]
 pub(crate) struct TaskData<'a, T: TaskReqTrait> {
@@ -31,7 +42,6 @@ impl<'a, T: TaskReqTrait> TaskData<'a, T> {
 pub(crate) struct GetBalanceRequest<'a> {
     pub(crate) clientKey: &'a str
 }
-
 
 #[derive(Serialize)]
 pub(crate) struct GetTaskResultRequest<'a> {
