@@ -1,9 +1,9 @@
-use crate::TaskRespTrait;
+use crate::*;
 use serde::Deserialize;
 
-impl TaskRespTrait for NoCaptchaTaskProxylessResp {}
+impl TaskRespTrait for RecaptchaV2TaskProxylessResp {}
 
-impl TaskRespTrait for NoCaptchaTaskResp {}
+impl TaskRespTrait for RecaptchaV2TaskResp {}
 
 impl TaskRespTrait for RecaptchaV2EnterpriseTaskResp {}
 
@@ -12,12 +12,12 @@ impl TaskRespTrait for RecaptchaV2EnterpriseTaskProxylessResp {}
 impl TaskRespTrait for RecaptchaV3TaskProxylessResp {}
 
 #[derive(Deserialize, Clone, Debug)]
-pub struct NoCaptchaTaskProxylessResp {
+pub struct RecaptchaV2TaskProxylessResp {
     pub gRecaptchaResponse: String,
 }
 
 #[derive(Deserialize, Clone, Debug)]
-pub struct NoCaptchaTaskResp {
+pub struct RecaptchaV2TaskResp {
     pub gRecaptchaResponse: String,
 }
 

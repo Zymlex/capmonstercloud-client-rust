@@ -1,14 +1,10 @@
 #![allow(non_snake_case)]
 
-use self::get_task_result_repeater::GetTaskResultRepeater;
-use crate::cfg::{Config, limits};
+use crate::cfg::urls::Urls;
+use crate::cfg::{limits, Config};
 use crate::error::RequestCreatorError;
 use crate::error::RequestCreatorError::HttpClientCreationError;
-use crate::{
-    CreateTask, GetBalance, GetBalanceResp, GetTaskResult, GetTaskResultResp, MethodReqTrait,
-    SvcErrorResp, SvcResp, SvcRespTypeTrait, SvcResponse, SvcSuccessResp, TaskIdResp, TaskReqTrait,
-    TaskRespTrait,
-};
+use crate::*;
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Client as HttpClient;
 use reqwest::{StatusCode, Url};
@@ -16,9 +12,6 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::time::Duration;
 use tracing::warn;
-use crate::cfg::urls::Urls;
-
-mod get_task_result_repeater;
 
 pub(crate) struct RequestCreator<'a> {
     http_client: HttpClient,
@@ -39,6 +32,7 @@ impl<'a> RequestCreator<'a> {
 
         let http_client = reqwest::ClientBuilder::new()
             .default_headers(headers)
+            .gzip(true)
             .timeout(Duration::from_millis(limits::REQUEST_TIMEOUT_MS))
             .http2_keep_alive_interval(Duration::from_millis(limits::HTTP2_KEEP_ALIVE_INTERVAL_MS))
             .http2_keep_alive_while_idle(false)
@@ -73,20 +67,19 @@ impl<'a> RequestCreator<'a> {
         Ok(resp_obj)
     }
 
-    pub(crate) fn getTaskResultRepeater(&self, taskId: u32) -> GetTaskResultRepeater {
-        GetTaskResultRepeater::new(taskId, self.client_key, self)
-    }
-
     pub(crate) async fn getTaskResult<
         Y: TaskRespTrait + DeserializeOwned + std::fmt::Debug + 'a,
     >(
         &self,
-        task_data: &GetTaskResult<'a>,
+        taskId: u32,
     ) -> Result<SvcResponse<GetTaskResultResp<Y>>, RequestCreatorError> {
         let result = self
             .make_svc_request::<GetTaskResult, GetTaskResultResp<Y>>(
                 &self.urls.task_result_url,
-                task_data,
+                &GetTaskResult {
+                    clientKey: self.client_key,
+                    taskId,
+                },
             )
             .await?;
 

@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use crate::TaskRespTrait;
+use crate::*;
 
 impl TaskRespTrait for ImageToTextTaskResp {}
 

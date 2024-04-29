@@ -1,4 +1,4 @@
-use crate::TaskReqTrait;
+use crate::*;
 use serde::Serialize;
 use serde_with_macros::skip_serializing_none;
 
@@ -19,26 +19,26 @@ pub(crate) struct ComplexImageTask<'a> {
 #[serde(tag = "type")]
 pub struct ComplexImageTaskData<'a> {
     #[serde(flatten)]
-    images: ImagesArray<'a>,
+    pub images: ImagesArray<'a>,
 
-    metadata: ComplexImageTaskMetadata<'a>,
-    exampleImageUrls: Option<&'a [&'a str]>,
-    exampleImagesBase64: Option<&'a [&'a str]>,
-    userAgent: Option<&'a str>,
-    websiteUrl: Option<&'a str>,
+    pub metadata: ComplexImageTaskMetadata<'a>,
+    pub exampleImageUrls: Option<&'a [&'a str]>,
+    pub exampleImagesBase64: Option<&'a [&'a str]>,
+    pub userAgent: Option<&'a str>,
+    pub websiteUrl: Option<&'a str>,
 }
 
 #[allow(non_camel_case_types)]
 #[skip_serializing_none]
 #[derive(Serialize, Clone, Debug)]
 pub enum ImagesArray<'a> {
-    imageUrls(&'a [&'a str]),
-    imagesBase64(&'a [&'a str]),
+    pub imageUrls(&'a [&'a str]),
+    pub imagesBase64(&'a [&'a str]),
 }
 
 #[skip_serializing_none]
 #[derive(Serialize, Clone, Debug)]
-struct ComplexImageTaskMetadata<'a> {
+pub struct ComplexImageTaskMetadata<'a> {
     pub Grid: &'a str,
     pub TaskDefinition: Option<&'a str>,
     pub Task: Option<&'a str>,

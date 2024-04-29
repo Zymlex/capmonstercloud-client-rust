@@ -5,22 +5,24 @@
 // private items shadows public glob re-export
 
 mod ImageToTextTask_mod;
-mod Recaptcha;
+mod RecaptchaTask_mod;
 mod FunCaptchaTask_mod;
 mod HCaptchaTask_mod;
 mod GeeTestTask_mod;
 mod TurnstileTask_mod;
 mod ComplexImageTask_mod;
-mod CustomTask;
+mod CustomTask_mod;
+mod AmazonTask_mod;
 
 pub use self::ImageToTextTask_mod::*;
-pub use self::Recaptcha::*;
+pub use self::RecaptchaTask_mod::*;
 pub use self::FunCaptchaTask_mod::*;
 pub use self::HCaptchaTask_mod::*;
 pub use self::GeeTestTask_mod::*;
 pub use self::TurnstileTask_mod::*;
 pub use self::ComplexImageTask_mod::*;
-pub use self::CustomTask::*;
+pub use self::CustomTask_mod::*;
+pub use self::AmazonTask_mod::*;
 
 use serde::Serialize;
 use serde_with_macros::skip_serializing_none;

@@ -2,8 +2,6 @@
 
 mod parse;
 
-pub(crate) use crate::captcha::request::get_task_result_repeater::*;
-
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::fmt::{Debug, Display, Formatter};
@@ -45,7 +43,7 @@ impl<X: SvcRespTypeTrait + DeserializeOwned> SvcResponse<X> {
         }
     }
 
-    pub const fn get_struct(&self) -> &SvcResp<X> {
+    pub const fn get_inner(&self) -> &SvcResp<X> {
         &self.resp
     }
 
@@ -58,40 +56,21 @@ impl<X: SvcRespTypeTrait + DeserializeOwned> SvcResponse<X> {
     }
 }
 
-// impl<'a, T: TaskTypeTrait + DeserializeOwned + 'a> SvcResponse<GetTaskResultResp<'a, T>> {
-//     fn check_task(&self) -> Result<(),SvcResponseError> {
-//         match self.get_result() {
-//             Ok(r) => match r {
-//                 Ok(r) => return Ok(r),
-//                 Err(e) => match e {
-//                     GetTaskError::Processing => continue,
-//                     GetTaskError::ReadyTaskWithoutSolution => {
-//                         return Err(TaskResultError::ReadyTaskWithoutSolution)
-//                     }
-//                 },
-//             },
-//             Err(e) => return Err(TaskResultError::GetResultFailed(e)),
-//         }
-//     }
-// }
-
 pub trait SvcRespTypeTrait: Clone + Debug {
-    // Required for explicit use `Result` type to support `Try`. type Value; type Error;
+    // Required for explicit use `Result` type to support `Try`.
     type Value;
     type Error;
 
     fn get_task_result(&self) -> Result<Self::Value, Self::Error>;
 }
 
-// pub(crate) trait TaskRespTypeTrait: SvcRespTypeTrait {
-//     type TaskRespType: TaskRespTrait + DeserializeOwned;
-// }
-
 #[derive(Debug, Clone)]
 pub enum SvcResp<X: SvcRespTypeTrait> {
     Success(SvcSuccessResp<X>),
     Error(SvcErrorResp),
 }
+
+// Success
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct SvcSuccessResp<X: SvcRespTypeTrait> {
@@ -116,8 +95,11 @@ where
     }
 }
 
+// Error
+
 #[derive(Deserialize, Debug, Clone)]
 pub struct SvcErrorResp {
+    /// Always ***not*** 0.
     #[serde(deserialize_with = "parse::check_failure_errorId")]
     errorId: u8,
     errorCode: Option<String>,

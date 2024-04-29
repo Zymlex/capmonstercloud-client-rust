@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 use crate::error::GetTaskError;
-use crate::{SvcRespTypeTrait, TaskRespTrait};
+use crate::*;
 use serde::Deserialize;
 
 #[derive(Deserialize, Clone, Debug)]
@@ -59,10 +59,6 @@ impl<'a, Y: TaskRespTrait + 'a> SvcRespTypeTrait for GetTaskResultResp<Y> {
         }
     }
 }
-
-// impl<Y: TaskRespTrait + DeserializeOwned> TaskRespTypeTrait for GetTaskResultResp<Y> {
-//     type TaskRespType = Y;
-// }
 
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Clone, Debug)]

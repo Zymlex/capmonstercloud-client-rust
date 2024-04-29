@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 use serde::Serialize;
-use crate::TaskReqTrait;
+use crate::*;
 
 pub(crate) trait MethodReqTrait {}
 

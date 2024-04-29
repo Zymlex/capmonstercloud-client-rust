@@ -1,15 +1,15 @@
-use crate::{ProxySettings, TaskReqTrait};
+use crate::*;
 use serde::Serialize;
 use serde_with_macros::skip_serializing_none;
 
-impl<'a> TaskReqTrait for TurnstileTask<'a> {}
-
-impl<'a> TaskReqTrait for TurnstileTaskProxyless<'a> {}
+impl<'a> TaskReqTrait for Turnstile<'a> {}
+impl<'a> TaskReqTrait for CloudFlareChallenge<'a> {}
+impl<'a> TaskReqTrait for CloudFlareChallengeWithProxy<'a> {}
 
 #[skip_serializing_none]
 #[derive(Serialize, Default, Clone, Debug)]
 #[serde(tag = "type")]
-pub struct TurnstileTaskProxyless<'a> {
+pub struct Turnstile<'a> {
     pub websiteURL: &'a str,
     pub websiteKey: &'a str,
     pub pageAction: Option<&'a str>,
@@ -18,19 +18,27 @@ pub struct TurnstileTaskProxyless<'a> {
 #[skip_serializing_none]
 #[derive(Serialize, Default, Clone, Debug)]
 #[serde(tag = "type")]
-pub struct TurnstileTask<'a> {
+pub struct CloudFlareChallenge<'a> {
     pub websiteURL: &'a str,
     pub websiteKey: &'a str,
+    pub cloudflareTaskType: &'a str,
+    pub userAgent: &'a str,
+    pub pageAction: &'a str,
+    pub data: &'a str,
+    pub pageData: &'a str,
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Default, Clone, Debug)]
+#[serde(tag = "type")]
+pub struct CloudFlareChallengeWithProxy<'a> {
+    pub websiteURL: &'a str,
+    pub websiteKey: &'a str,
+    
+    pub cloudflareTaskType: Option<CloudflareTaskType>,
 
     #[serde(flatten)]
     pub proxy: ProxySettings<'a>,
-
-    pub cloudflareTaskType: Option<CloudflareTaskType>,
-    pub htmlPageBase64: Option<&'a str>,
-    pub userAgent: Option<&'a str>,
-    pub pageAction: Option<&'a str>,
-    pub data: Option<&'a str>,
-    pub pageData: Option<&'a str>,
 }
 
 #[allow(non_camel_case_types)]

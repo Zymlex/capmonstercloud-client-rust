@@ -1,7 +1,7 @@
-use crate::error::{RequestCreatorError, TaskResultError};
 use crate::cfg::limits;
 use crate::cfg::limits::{Limits, LimitsTrait};
-use crate::{GetTaskResultResp, SvcResponse, TaskReqTrait, TaskRespTrait};
+use crate::error::{CMCTaskError, RequestCreatorError, TaskResultError};
+use crate::*;
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -16,10 +16,12 @@ pub(crate) struct CMCTask<
 > where
     Limits<T>: LimitsTrait,
 {
+    task_id: u32,
+
     creation_time: Instant,
     requests_counter: u8,
 
-    repeater: GetTaskResultRepeater<'a>,
+    rc: &'a RequestCreator<'a>,
 
     #[allow(non_snake_case)]
     #[doc(hidden)]
@@ -38,19 +40,33 @@ impl<
 where
     Limits<T>: LimitsTrait,
 {
-    pub(crate) fn new(repeater: GetTaskResultRepeater<'a>) -> CMCTask<'a, T, Y>
+    pub(crate) async fn new(
+        rc: &'a RequestCreator<'a>,
+        task_body: T,
+    ) -> Result<CMCTask<'a, T, Y>, CMCTaskError>
     where
         Limits<T>: LimitsTrait,
     {
-        Self {
+        let resp = rc
+            .createTask(task_body)
+            .await
+            .map_err(CMCTaskError::TaskCreationError)?;
+
+        let task_id = resp
+            .get_result()
+            .map_err(CMCTaskError::CreateTaskGetResultError)?;
+
+        Ok(Self {
+            task_id,
+
             creation_time: Instant::now(),
             requests_counter: 0,
 
-            repeater,
+            rc,
 
             __: PhantomData,
             ___: PhantomData,
-        }
+        })
     }
 
     pub(crate) async fn get_task_result_in_loop(
@@ -65,7 +81,10 @@ where
         loop {
             self.add_request_count();
 
-            let resp_result = self.repeater.check::<Y>().await;
+            let resp_result = self
+                .rc
+                .getTaskResult::<Y>(self.task_id)
+                .await;
 
             let state: State<Y> = match resp_result {
                 Err(e) => match e {
@@ -87,9 +106,7 @@ where
                     self.check_and_wait_req_interval().await?;
                     continue;
                 }
-                State::Bad(e) => {
-                    Err(e)
-                }
+                State::Bad(e) => Err(e),
             };
         }
     }

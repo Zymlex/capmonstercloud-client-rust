@@ -1,4 +1,4 @@
-use crate::{ProxySettings, TaskReqTrait};
+use crate::*;
 use serde::Serialize;
 use serde_with_macros::skip_serializing_none;
 

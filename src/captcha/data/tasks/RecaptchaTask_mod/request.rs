@@ -1,10 +1,10 @@
-use crate::{ProxySettings, TaskReqTrait};
+use crate::*;
 use serde::Serialize;
 use serde_with_macros::skip_serializing_none;
 
-impl<'a> TaskReqTrait for NoCaptchaTaskProxyless<'a> {}
+impl<'a> TaskReqTrait for RecaptchaV2TaskProxyless<'a> {}
 
-impl<'a> TaskReqTrait for NoCaptchaTask<'a> {}
+impl<'a> TaskReqTrait for RecaptchaV2Task<'a> {}
 
 impl<'a> TaskReqTrait for RecaptchaV2EnterpriseTask<'a> {}
 
@@ -15,7 +15,7 @@ impl<'a> TaskReqTrait for RecaptchaV3TaskProxyless<'a> {}
 #[skip_serializing_none]
 #[derive(Serialize, Default, Clone, Debug)]
 #[serde(tag = "type")]
-pub struct NoCaptchaTaskProxyless<'a> {
+pub struct RecaptchaV2TaskProxyless<'a> {
     pub websiteURL: &'a str,
     pub websiteKey: &'a str,
     pub recaptchaDataSValue: Option<&'a str>,
@@ -26,7 +26,7 @@ pub struct NoCaptchaTaskProxyless<'a> {
 #[skip_serializing_none]
 #[derive(Serialize, Default, Clone, Debug)]
 #[serde(tag = "type")]
-pub struct NoCaptchaTask<'a> {
+pub struct RecaptchaV2Task<'a> {
     pub websiteURL: &'a str,
     pub websiteKey: &'a str,
     pub recaptchaDataSValue: Option<&'a str>,

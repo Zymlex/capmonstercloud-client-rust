@@ -1,6 +1,6 @@
 #![allow(clippy::enum_variant_names)]
 
-use crate::SvcErrorResp;
+use crate::*;
 use reqwest::StatusCode;
 
 #[derive(Debug)]
@@ -36,8 +36,8 @@ pub enum RequestCreatorError {
     NonSuccessResponseStatus(StatusCode),
     ResponseToStringError(reqwest::Error),
     SerializationError(serde_json::Error),
-    DeserializationErrorError(serde_json::Error),
     DeserializationSuccessError(serde_json::Error),
+    DeserializationErrorError(serde_json::Error),
 }
 
 #[derive(Debug)]
@@ -66,11 +66,17 @@ pub enum GetBalanceError {
 }
 
 #[derive(Debug)]
-pub enum SolveError {
+pub enum CMCTaskError {
     TaskCreationError(RequestCreatorError),
     CreateTaskGetResultError(SvcResponseError),
     GetTaskResultError(TaskResultError),
     TaskResultError(SvcResponseError),
+}
+
+#[derive(Debug)]
+pub enum SolveError {
+    TaskCreationError(CMCTaskError),
+    GetTaskResultErrorInLoop(TaskResultError),
 }
 
 #[derive(Debug)]

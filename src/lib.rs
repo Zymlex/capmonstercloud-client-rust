@@ -1,3 +1,4 @@
+#![cfg_attr(not(debug_assertions), deny(allow))]
 #![cfg_attr(not(debug_assertions), deny(warnings))]
 #![warn(
     clippy::all,
@@ -9,12 +10,15 @@
 #![deny(nonstandard_style)]
 #![forbid(non_ascii_idents, uncommon_codepoints, future_incompatible)]
 #![allow(clippy::missing_errors_doc)]
+#![allow(clippy::redundant_pub_crate)]
 
 pub use self::captcha::*;
 
 use self::cfg::Config;
-use self::error::CapMonsterCloudClientError::ClientImplError;
-use self::error::{CapMonsterCloudClientError, GetBalanceError, SolveError};
+use self::error::{
+    CapMonsterCloudClientError::{self, ClientImplError},
+    GetBalanceError, SolveError,
+};
 use self::taskmgr::Solver;
 
 mod captcha;
@@ -23,32 +27,34 @@ mod error;
 mod taskmgr;
 mod tests;
 
+/// Call [`new`][CapMonsterCloudClient::new] to instantiate this struct.
 pub struct CapMonsterCloudClient<'a> {
     taskmgr: Solver<'a>,
 }
 
 impl<'a> CapMonsterCloudClient<'a> {
     /// Creates new capmonster.cloud сlient
-    pub fn new(client_key: &'a str) -> Result<Self, CapMonsterCloudClientError>
-    {
-        Self::new_ex(Config::new(client_key)?)
-    }
-
-    /// Creates new capmonster.cloud сlient with additional options
-    fn new_ex(cfg: Config<'a>) -> Result<Self, CapMonsterCloudClientError> {
+    pub fn new(client_key: &'a str) -> Result<Self, CapMonsterCloudClientError> {
         Ok(Self {
-            taskmgr: Solver::new(cfg).map_err(ClientImplError)?,
+            taskmgr: Solver::new(Config::new(client_key)?).map_err(ClientImplError)?,
         })
     }
 
+    // /// Creates new capmonster.cloud сlient with additional options
+    // fn new_ex(cfg: Config<'a>) -> Result<Self, CapMonsterCloudClientError> {
+    //     Ok(Self {
+    //         taskmgr: Solver::new(cfg).map_err(ClientImplError)?,
+    //     })
+    // }
+
     /// Get the amount of funds on the account.
     ///
-    /// https://zennolab.atlassian.net/wiki/x/SAAK
+    /// [Doc](https://docs.capmonster.cloud/docs/api/methods/get-balance)
     pub async fn get_balance_async(&self) -> Result<SvcResponse<GetBalanceResp>, GetBalanceError> {
         self.taskmgr.get_balance_async().await
     }
 
-    /// https://zennolab.atlassian.net/wiki/x/bQAK
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/image-to-text)
     pub async fn image_to_text_task(
         &self,
         data: ImageToTextTask<'a>,
@@ -56,39 +62,23 @@ impl<'a> CapMonsterCloudClient<'a> {
         self.taskmgr.solve_impl(data).await
     }
 
-    /// https://zennolab.atlassian.net/wiki/x/AQA_Fg
-    pub async fn no_captcha_task_proxyless(
-        &self,
-        data: NoCaptchaTaskProxyless<'a>,
-    ) -> Result<SvcResponse<GetTaskResultResp<NoCaptchaTaskProxylessResp>>, SolveError> {
-        self.taskmgr.solve_impl(data).await
-    }
-
-    /// https://zennolab.atlassian.net/wiki/x/FYCSK
-    pub async fn no_captcha_task(
-        &self,
-        data: NoCaptchaTask<'a>,
-    ) -> Result<SvcResponse<GetTaskResultResp<NoCaptchaTaskResp>>, SolveError> {
-        self.taskmgr.solve_impl(data).await
-    }
-
-    /// https://zennolab.atlassian.net/wiki/x/AQA_Fg
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/no-captcha-task)
     pub async fn recaptcha_v2_task_proxyless(
         &self,
-        data: NoCaptchaTaskProxyless<'a>,
-    ) -> Result<SvcResponse<GetTaskResultResp<NoCaptchaTaskProxylessResp>>, SolveError> {
-        self.no_captcha_task_proxyless(data).await
+        data: RecaptchaV2TaskProxyless<'a>,
+    ) -> Result<SvcResponse<GetTaskResultResp<RecaptchaV2TaskProxylessResp>>, SolveError> {
+        self.taskmgr.solve_impl(data).await
     }
 
-    /// https://zennolab.atlassian.net/wiki/x/FYCSK
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/no-captcha-task)
     pub async fn recaptcha_v2_task(
         &self,
-        data: NoCaptchaTask<'a>,
-    ) -> Result<SvcResponse<GetTaskResultResp<NoCaptchaTaskResp>>, SolveError> {
-        self.no_captcha_task(data).await
+        data: RecaptchaV2Task<'a>,
+    ) -> Result<SvcResponse<GetTaskResultResp<RecaptchaV2TaskResp>>, SolveError> {
+        self.taskmgr.solve_impl(data).await
     }
 
-    /// https://zennolab.atlassian.net/wiki/x/EoDJIQ
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/recaptcha-v3-task)
     pub async fn recaptcha_v3_task_proxyless(
         &self,
         data: RecaptchaV3TaskProxyless<'a>,
@@ -96,7 +86,7 @@ impl<'a> CapMonsterCloudClient<'a> {
         self.taskmgr.solve_impl(data).await
     }
 
-    /// https://zennolab.atlassian.net/wiki/x/FYDXgQ
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/recaptcha-v2-enterprise-task)
     pub async fn recaptcha_v2_enterprise_task_proxyless(
         &self,
         data: RecaptchaV2EnterpriseTaskProxyless<'a>,
@@ -105,7 +95,7 @@ impl<'a> CapMonsterCloudClient<'a> {
         self.taskmgr.solve_impl(data).await
     }
 
-    /// https://zennolab.atlassian.net/wiki/x/AYDigQ
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/recaptcha-v2-enterprise-task)
     pub async fn recaptcha_v2_enterprise_task(
         &self,
         data: RecaptchaV2EnterpriseTask<'a>,
@@ -113,23 +103,23 @@ impl<'a> CapMonsterCloudClient<'a> {
         self.taskmgr.solve_impl(data).await
     }
 
-    /// https://zennolab.atlassian.net/wiki/x/OYDbKw
-    pub async fn funcaptcha_task(
-        &self,
-        data: FunCaptchaTask<'a>,
-    ) -> Result<SvcResponse<GetTaskResultResp<FunCaptchaTaskResp>>, SolveError> {
-        self.taskmgr.solve_impl(data).await
-    }
+    // /// [Doc](???)
+    // pub async fn funcaptcha_task(
+    //     &self,
+    //     data: FunCaptchaTask<'a>,
+    // ) -> Result<SvcResponse<GetTaskResultResp<FunCaptchaTaskResp>>, SolveError> {
+    //     self.taskmgr.solve_impl(data).await
+    // }
+    // 
+    // /// [Doc](???)
+    // pub async fn funcaptcha_task_proxyless(
+    //     &self,
+    //     data: FunCaptchaTaskProxyless<'a>,
+    // ) -> Result<SvcResponse<GetTaskResultResp<FunCaptchaTaskProxylessResp>>, SolveError> {
+    //     self.taskmgr.solve_impl(data).await
+    // }
 
-    /// https://zennolab.atlassian.net/wiki/x/FwBdJg
-    pub async fn funcaptcha_task_proxyless(
-        &self,
-        data: FunCaptchaTaskProxyless<'a>,
-    ) -> Result<SvcResponse<GetTaskResultResp<FunCaptchaTaskProxylessResp>>, SolveError> {
-        self.taskmgr.solve_impl(data).await
-    }
-
-    /// https://zennolab.atlassian.net/wiki/x/HAC4Rw
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/hcaptcha-task)
     pub async fn hcaptcha_task(
         &self,
         data: HCaptchaTask<'a>,
@@ -137,7 +127,7 @@ impl<'a> CapMonsterCloudClient<'a> {
         self.taskmgr.solve_impl(data).await
     }
 
-    /// https://zennolab.atlassian.net/wiki/x/EQC4Rw
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/hcaptcha-task)
     pub async fn hcaptcha_task_proxyless(
         &self,
         data: HCaptchaTaskProxyless<'a>,
@@ -145,7 +135,7 @@ impl<'a> CapMonsterCloudClient<'a> {
         self.taskmgr.solve_impl(data).await
     }
 
-    /// https://zennolab.atlassian.net/wiki/x/J4Cncw
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/geetest-task)
     pub async fn geetest_task(
         &self,
         data: GeeTestTask<'a>,
@@ -153,7 +143,7 @@ impl<'a> CapMonsterCloudClient<'a> {
         self.taskmgr.solve_impl(data).await
     }
 
-    /// https://zennolab.atlassian.net/wiki/x/KoCmcw
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/geetest-task)
     pub async fn geetest_task_proxyless(
         &self,
         data: GeeTestTaskProxyless<'a>,
@@ -161,58 +151,92 @@ impl<'a> CapMonsterCloudClient<'a> {
         self.taskmgr.solve_impl(data).await
     }
 
-    /// https://zennolab.atlassian.net/wiki/x/CoCShg
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/tunrstile-task)
     pub async fn turnstile_task(
         &self,
-        data: TurnstileTask<'a>,
+        data: CloudFlareChallengeWithProxy<'a>,
     ) -> Result<SvcResponse<GetTaskResultResp<TurnstileTaskResp>>, SolveError> {
         self.taskmgr.solve_impl(data).await
     }
 
-    /// https://zennolab.atlassian.net/wiki/x/B4CUhg
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/tunrstile-task)
     pub async fn turnstile_task_proxyless(
         &self,
-        data: TurnstileTaskProxyless<'a>,
+        data: Turnstile<'a>,
     ) -> Result<SvcResponse<GetTaskResultResp<TurnstileTaskProxylessResp>>, SolveError> {
         self.taskmgr.solve_impl(data).await
     }
 
-    /// https://zennolab.atlassian.net/wiki/x/AQDghw
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/recaptcha-click)
     pub async fn complex_image_task_recaptcha(
         &self,
         data: ComplexImageTaskData<'a>,
     ) -> Result<SvcResponse<GetTaskResultResp<TurnstileTaskProxylessResp>>, SolveError> {
-        let data = ComplexImageTask {
+        let cit = ComplexImageTask {
             class: "recaptcha",
             data,
         };
 
-        self.taskmgr.solve_impl(data).await
+        self.taskmgr.solve_impl(cit).await
     }
 
-    /// https://zennolab.atlassian.net/wiki/x/IgDfhw
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/hcaptcha-click)
     pub async fn complex_image_task_hcaptcha(
         &self,
         data: ComplexImageTaskData<'a>,
     ) -> Result<SvcResponse<GetTaskResultResp<TurnstileTaskProxylessResp>>, SolveError> {
-        let data = ComplexImageTask {
+        let cit = ComplexImageTask {
             class: "hcaptcha",
             data,
         };
 
-        self.taskmgr.solve_impl(data).await
+        self.taskmgr.solve_impl(cit).await
     }
-
-    /// https://zennolab.atlassian.net/wiki/x/AQC0i
-    pub async fn complex_image_task_funcaptcha(
+    
+    // /// [Doc](???)
+    // pub async fn complex_image_task_funcaptcha(
+    //     &self,
+    //     data: ComplexImageTaskData<'a>,
+    // ) -> Result<SvcResponse<GetTaskResultResp<TurnstileTaskProxylessResp>>, SolveError> {
+    //     let data = ComplexImageTask {
+    //         class: "funcaptcha",
+    //         data,
+    //     };
+    //     
+    //     self.taskmgr.solve_impl(data).await
+    // }
+    
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/datadome)
+    pub async fn custom_task_datadome(
         &self,
-        data: ComplexImageTaskData<'a>,
-    ) -> Result<SvcResponse<GetTaskResultResp<TurnstileTaskProxylessResp>>, SolveError> {
-        let data = ComplexImageTask {
-            class: "funcaptcha",
+        data: CustomTaskData<'a>,
+    ) -> Result<SvcResponse<GetTaskResultResp<CustomTaskResp>>, SolveError> {
+        let ct = CustomTask {
+            class: "DataDome",
             data,
         };
-
+        
+        self.taskmgr.solve_impl(ct).await
+    }
+    
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/tendi)
+    pub async fn custom_task_tendi(
+        &self,
+        data: CustomTaskData<'a>,
+    ) -> Result<SvcResponse<GetTaskResultResp<CustomTaskResp>>, SolveError> {
+        let ct = CustomTask {
+            class: "TenDI",
+            data,
+        };
+        
+        self.taskmgr.solve_impl(ct).await
+    }
+    
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/amazon-task)
+    pub async fn amazon_task_proxyless(
+        &self,
+        data: AmazonTaskProxyless<'a>,
+    ) -> Result<SvcResponse<GetTaskResultResp<AmazonTaskProxylessResp>>, SolveError> {
         self.taskmgr.solve_impl(data).await
     }
 }

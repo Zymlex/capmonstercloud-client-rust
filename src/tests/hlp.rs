@@ -2,9 +2,9 @@ use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use std::io::Cursor;
 use std::path::Path;
-use image::ImageOutputFormat;
+use image::ImageFormat;
 
-pub(super) fn image_file_to_base64<P>(path: P, format: ImageOutputFormat) -> String
+pub(super) fn image_file_to_base64<P>(path: P, format: ImageFormat) -> String
 where
     P: AsRef<Path>,
 {

@@ -1,4 +1,4 @@
-use crate::TaskRespTrait;
+use crate::*;
 use serde::Deserialize;
 
 impl TaskRespTrait for HCaptchaTaskResp {}
