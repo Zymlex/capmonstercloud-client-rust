@@ -8,7 +8,7 @@ impl TaskRespTrait for ComplexImageTaskCoordinateResp {}
 #[derive(Deserialize, Clone, Debug)]
 pub struct ComplexImageTaskGridResp {
     answer: Vec<bool>,
-    metadata: Option<ComplexImageTaskMetadata>,
+    metadata: Option<ComplexImageTaskMetadataResp>,
 }
 
 //TODO parse types
@@ -16,11 +16,11 @@ pub struct ComplexImageTaskGridResp {
 #[derive(Deserialize, Clone, Debug)]
 pub struct ComplexImageTaskCoordinateResp {
     answer: Vec<ComplexImageTaskCoordinates>,
-    metadata: Option<ComplexImageTaskMetadata>,
+    metadata: Option<ComplexImageTaskMetadataResp>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
-pub struct ComplexImageTaskMetadata {
+pub struct ComplexImageTaskMetadataResp {
     AnswerType: String,
 }
 

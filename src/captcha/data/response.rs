@@ -1,7 +1,8 @@
-#![allow(non_snake_case)]
+#![allow(non_snake_case, reason = "API")]
 
 use crate::error::GetTaskError;
 use crate::*;
+use error::SvcRespStructError;
 use serde::Deserialize;
 
 #[derive(Deserialize, Clone, Debug)]
@@ -9,9 +10,25 @@ pub struct GetBalanceResp {
     pub(crate) balance: f64,
 }
 
+impl SvcRespTypeTrait for GetBalanceResp {
+    type Value = f64;
+
+    fn get_result(&self) -> Result<Self::Value, SvcRespStructError> {
+        Ok(self.balance)
+    }
+}
+
 #[derive(Deserialize, Clone, Debug)]
 pub(crate) struct TaskIdResp {
     pub(crate) taskId: u32,
+}
+
+impl SvcRespTypeTrait for TaskIdResp {
+    type Value = u32;
+
+    fn get_result(&self) -> Result<Self::Value, SvcRespStructError> {
+        Ok(self.taskId)
+    }
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -20,47 +37,28 @@ pub struct GetTaskResultResp<Y: TaskRespTrait> {
     solution: Option<Y>,
 }
 
-impl SvcRespTypeTrait for GetBalanceResp {
-    type Value = f64;
-    type Error = ();
-
-    fn get_task_result(&self) -> Result<Self::Value, Self::Error> {
-        Ok(self.balance)
-    }
-}
-
-impl<'a> SvcRespTypeTrait for TaskIdResp {
-    type Value = u32;
-    type Error = ();
-
-    fn get_task_result(&self) -> Result<Self::Value, Self::Error> {
-        Ok(self.taskId)
-    }
-}
-
 impl<'a, Y: TaskRespTrait + 'a> SvcRespTypeTrait for GetTaskResultResp<Y> {
     type Value = Y;
-    type Error = GetTaskError;
 
-    fn get_task_result(&self) -> Result<Self::Value, Self::Error> {
+    fn get_result(&self) -> Result<Self::Value, SvcRespStructError> {
         let status = &self.status;
 
         match status {
             TaskState::ready =>
             {
-                #[allow(clippy::option_if_let_else)]
+                #[allow(clippy::option_if_let_else, reason = "Readability")]
                 if let Some(r) = &self.solution {
                     Ok(r.clone())
                 } else {
-                    Err(GetTaskError::ReadyTaskWithoutSolution)
+                    Err(SvcRespStructError::GetTaskError(GetTaskError::ReadyTaskWithoutSolution))
                 }
             }
-            TaskState::processing => Err(GetTaskError::Processing),
+            TaskState::processing => Err(SvcRespStructError::GetTaskError(GetTaskError::Processing)),
         }
     }
 }
 
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, reason = "API")]
 #[derive(Deserialize, Clone, Debug)]
 pub(crate) enum TaskState {
     processing,

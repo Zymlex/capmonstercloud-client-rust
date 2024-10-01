@@ -1,17 +1,17 @@
 use reqwest::Url;
 
 pub(crate) struct Urls {
-    pub(crate) balance_url: Url,
-    pub(crate) task_creation_url: Url,
-    pub(crate) task_result_url: Url,
+    pub(crate) balance: Url,
+    pub(crate) task_creation: Url,
+    pub(crate) task_result: Url,
 }
 
 impl Urls {
     pub(crate) fn from(service_url: &Url) -> Self {
         Self {
-            balance_url      : Self::get_full_url(service_url, "getBalance"),
-            task_creation_url: Self::get_full_url(service_url, "createTask"),
-            task_result_url  : Self::get_full_url(service_url, "getTaskResult"),
+            balance      : Self::get_full_url(service_url, "getBalance"),
+            task_creation: Self::get_full_url(service_url, "createTask"),
+            task_result  : Self::get_full_url(service_url, "getTaskResult"),
         }
     }
     

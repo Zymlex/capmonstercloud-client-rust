@@ -1,5 +1,3 @@
-#![allow(clippy::enum_variant_names)]
-
 use crate::*;
 use reqwest::StatusCode;
 
@@ -24,7 +22,6 @@ impl From<OptionsError> for CapMonsterCloudClientError {
 pub enum SvcResponseError {
     GettingResultError(
         SvcRespStructError,
-        #[cfg(feature = "keep-request-body")] String,
     ),
     SvcReturnErrorCode(SvcErrorResp),
 }
@@ -43,26 +40,14 @@ pub enum RequestCreatorError {
 #[derive(Debug)]
 pub enum SvcRespStructError {
     _ReportBug,
-    SuccessResponseWithoutData,
-}
-
-// TODO Remove all this From
-
-impl From<()> for SvcRespStructError {
-    fn from(_: ()) -> Self {
-        Self::_ReportBug
-    }
-}
-
-impl From<GetTaskError> for SvcRespStructError {
-    fn from(_: GetTaskError) -> Self {
-        Self::_ReportBug
-    }
+    _ReportBugSuccessResponseWithoutData,
+    GetTaskError(GetTaskError)
 }
 
 #[derive(Debug)]
 pub enum GetBalanceError {
     RequestError(RequestCreatorError),
+    SvcResponseError(SvcResponseError),
 }
 
 #[derive(Debug)]
@@ -88,6 +73,7 @@ pub enum TaskResultError {
     GetResultFailed(RequestCreatorError),
     GetResultTotalTimeout,
     ReadyTaskWithoutSolution,
+    SvcResponseError(SvcResponseError),
 }
 
 #[derive(Debug)]

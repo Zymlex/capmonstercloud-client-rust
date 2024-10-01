@@ -21,6 +21,7 @@ pub struct RecaptchaV2TaskProxyless<'a> {
     pub recaptchaDataSValue: Option<&'a str>,
     pub userAgent: Option<&'a str>,
     pub cookies: Option<&'a str>,
+    pub isInvisible: Option<bool>,
 }
 
 #[skip_serializing_none]
@@ -36,6 +37,7 @@ pub struct RecaptchaV2Task<'a> {
 
     pub userAgent: Option<&'a str>,
     pub cookies: Option<&'a str>,
+    pub isInvisible: Option<&'a str>,
 }
 
 #[skip_serializing_none]

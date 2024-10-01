@@ -4,39 +4,30 @@ mod parse;
 
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
-use std::fmt::{Debug, Display, Formatter};
+use std::{fmt::{Debug, Display, Formatter}, num::NonZeroU8};
 
 use crate::error::{SvcResponseError, SvcRespStructError};
 
 #[derive(Debug, Clone)]
 pub struct SvcResponse<X: SvcRespTypeTrait + DeserializeOwned> {
     resp: SvcResp<X>,
-    #[cfg(feature = "keep-request-body")]
-    body: String,
 }
 
 impl<X: SvcRespTypeTrait + DeserializeOwned> SvcResponse<X> {
     pub const fn new(
         svc_struct: SvcResp<X>,
-        #[cfg(feature = "keep-request-body")] body: String,
     ) -> Self {
         Self {
             resp: svc_struct,
-            #[cfg(feature = "keep-request-body")]
-            body,
         }
     }
 
     pub fn get_result(&self) -> Result<X::Value, SvcResponseError>
-    where
-        SvcRespStructError: From<<X as SvcRespTypeTrait>::Error>,
     {
         match &self.resp {
             SvcResp::Success(r) => r.get_result().map_err(|e| {
                 SvcResponseError::GettingResultError(
                     e,
-                    #[cfg(feature = "keep-request-body")]
-                    self.body.clone(),
                 )
             }),
             SvcResp::Error(e) => Err(SvcResponseError::SvcReturnErrorCode(e.clone())),
@@ -46,22 +37,13 @@ impl<X: SvcRespTypeTrait + DeserializeOwned> SvcResponse<X> {
     pub const fn get_inner(&self) -> &SvcResp<X> {
         &self.resp
     }
-
-    pub fn get_body(&self) -> &str {
-        #[cfg(feature = "keep-request-body")]
-        return &self.body;
-
-        #[cfg(not(feature = "keep-request-body"))]
-        compile_error!("Required 'keep-request-body' feature.")
-    }
 }
 
 pub trait SvcRespTypeTrait: Clone + Debug {
     // Required for explicit use `Result` type to support `Try`.
     type Value;
-    type Error;
 
-    fn get_task_result(&self) -> Result<Self::Value, Self::Error>;
+    fn get_result(&self) -> Result<Self::Value, SvcRespStructError>;
 }
 
 #[derive(Debug, Clone)]
@@ -84,13 +66,11 @@ pub struct SvcSuccessResp<X: SvcRespTypeTrait> {
 }
 
 impl<X: SvcRespTypeTrait + DeserializeOwned> SvcSuccessResp<X>
-where
-    SvcRespStructError: From<<X as SvcRespTypeTrait>::Error>,
 {
     pub(crate) fn get_result(&self) -> Result<X::Value, SvcRespStructError> {
         match &self.flat_data {
-            Some(r) => Ok(r.get_task_result()?),
-            None => Err(SvcRespStructError::SuccessResponseWithoutData),
+            Some(r) => Ok(r.get_result()?),
+            None => Err(SvcRespStructError::_ReportBugSuccessResponseWithoutData),
         }
     }
 }
@@ -99,9 +79,8 @@ where
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct SvcErrorResp {
-    /// Always ***not*** 0.
     #[serde(deserialize_with = "parse::check_failure_errorId")]
-    errorId: u8,
+    errorId: NonZeroU8,
     errorCode: Option<String>,
     errorDescription: Option<String>,
     taskId: Option<u64>,
@@ -109,7 +88,7 @@ pub struct SvcErrorResp {
 
 impl SvcErrorResp {
     const fn get_error_id(&self) -> u8 {
-        self.errorId
+        self.errorId.get()
     }
 
     fn get_error_code(&self) -> &str {

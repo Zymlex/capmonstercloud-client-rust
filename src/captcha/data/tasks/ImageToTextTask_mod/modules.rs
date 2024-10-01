@@ -1,8 +1,8 @@
-#![allow(non_camel_case_types)]
+#![allow(non_camel_case_types, reason = "API")]
+#![allow(clippy::upper_case_acronyms, reason = "API")]
 
 use serde::Serialize;
 
-#[allow(clippy::upper_case_acronyms)]
 #[derive(Serialize, Clone, Debug)]
 pub enum ITT_Modules {
     AMAZON,

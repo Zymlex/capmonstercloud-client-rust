@@ -15,7 +15,7 @@ where
         .write_to(&mut Cursor::new(&mut bytes), format)
         .unwrap();
 
-    println!("capacity: {}", bytes.capacity());
+    println!("Image size: {}", bytes.capacity());
 
     BASE64_STANDARD.encode(bytes)
 }

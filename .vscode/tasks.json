@@ -1,0 +1,49 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Test all",
+      "icon": {
+        "id": "debug",
+        "color": "terminal.ansiCyan"
+      },
+      "type": "cargo",
+      "command": "test",
+      "args": [
+        "-p",
+        "capmonster_cloud_client",
+        "--future-incompat-report",
+        // "--all-features",
+        // "recaptcha_v2_task_proxyless_check",
+        // "--",
+        // "--nocapture",
+      ],
+      "env": {
+        "RUST_BACKTRACE": "0",
+        "CMC_KEY": "",
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      },
+      "problemMatcher": [
+        "$rustc"
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true,
+        "revealProblems": "onProblem",
+        "close": false
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+    },
+  ]
+}

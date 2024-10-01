@@ -2,7 +2,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 use crate::cfg::Config;
-use crate::error::{GetBalanceError, RequestCreatorError, SvcRespStructError};
+use crate::error::{GetBalanceError, RequestCreatorError};
 use self::task::CMCTask;
 use crate::*;
 use crate::cfg::limits::{Limits, LimitsTrait};
@@ -23,14 +23,14 @@ impl<'a> Solver<'a> {
 
     pub(crate) async fn get_balance_async(
         &self,
-    ) -> Result<SvcResponse<GetBalanceResp>, GetBalanceError> {
+    ) -> Result<<GetBalanceResp as SvcRespTypeTrait>::Value, GetBalanceError> {
         let resp_obj = self
             .rc
             .getBalance()
             .await
             .map_err(GetBalanceError::RequestError)?;
 
-        Ok(resp_obj)
+        Ok(resp_obj.get_result().map_err(GetBalanceError::SvcResponseError)?)
     }
 
     pub(crate) async fn solve_impl<
@@ -39,10 +39,9 @@ impl<'a> Solver<'a> {
     >(
         &self,
         data: T,
-    ) -> Result<SvcResponse<GetTaskResultResp<Y>>, SolveError>
+    ) -> Result<<GetTaskResultResp<Y> as SvcRespTypeTrait>::Value, SolveError>
     where
         Limits<T>: LimitsTrait,
-        SvcRespStructError: From<<GetTaskResultResp<Y> as SvcRespTypeTrait>::Error>,
     {
         let mut task = CMCTask::<T, Y>::new(&self.rc, data)
             .await

@@ -1,3 +1,5 @@
+#![allow(non_snake_case, reason = "API")]
+
 use crate::*;
 use serde::Serialize;
 use serde_with_macros::skip_serializing_none;
@@ -28,12 +30,12 @@ pub struct ComplexImageTaskData<'a> {
     pub websiteUrl: Option<&'a str>,
 }
 
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, reason = "API")]
 #[skip_serializing_none]
 #[derive(Serialize, Clone, Debug)]
 pub enum ImagesArray<'a> {
-    pub imageUrls(&'a [&'a str]),
-    pub imagesBase64(&'a [&'a str]),
+    imageUrls(&'a [&'a str]),
+    imagesBase64(&'a [&'a str]),
 }
 
 #[skip_serializing_none]

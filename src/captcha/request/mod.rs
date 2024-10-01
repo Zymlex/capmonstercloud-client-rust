@@ -11,7 +11,8 @@ use reqwest::{StatusCode, Url};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::time::Duration;
-use tracing::warn;
+#[cfg(feature = "debug-output")]
+use tracing::info;
 
 pub(crate) struct RequestCreator<'a> {
     http_client: HttpClient,
@@ -33,7 +34,7 @@ impl<'a> RequestCreator<'a> {
         let http_client = reqwest::ClientBuilder::new()
             .default_headers(headers)
             .gzip(true)
-            .timeout(Duration::from_millis(limits::REQUEST_TIMEOUT_MS))
+         // .timeout(Duration::from_millis(limits::REQUEST_TIMEOUT_MS))
             .http2_keep_alive_interval(Duration::from_millis(limits::HTTP2_KEEP_ALIVE_INTERVAL_MS))
             .http2_keep_alive_while_idle(false)
             .build()
@@ -46,7 +47,6 @@ impl<'a> RequestCreator<'a> {
         })
     }
 
-    /// https://zennolab.atlassian.net/wiki/spaces/APIS/pages/393308
     pub(crate) async fn createTask<T: TaskReqTrait + Serialize>(
         &self,
         task_body: T,
@@ -59,7 +59,7 @@ impl<'a> RequestCreator<'a> {
 
         let resp_obj = self
             .make_svc_request::<CreateTask<'a, T>, TaskIdResp>(
-                &self.urls.task_creation_url,
+                &self.urls.task_creation,
                 &request_data,
             )
             .await?;
@@ -75,7 +75,7 @@ impl<'a> RequestCreator<'a> {
     ) -> Result<SvcResponse<GetTaskResultResp<Y>>, RequestCreatorError> {
         let result = self
             .make_svc_request::<GetTaskResult, GetTaskResultResp<Y>>(
-                &self.urls.task_result_url,
+                &self.urls.task_result,
                 &GetTaskResult {
                     clientKey: self.client_key,
                     taskId,
@@ -94,13 +94,12 @@ impl<'a> RequestCreator<'a> {
         };
 
         let result = self
-            .make_svc_request::<GetBalance, GetBalanceResp>(&self.urls.balance_url, &request_data)
+            .make_svc_request::<GetBalance, GetBalanceResp>(&self.urls.balance, &request_data)
             .await?;
 
         Ok(result)
     }
 
-    #[allow(clippy::needless_lifetimes)]
     async fn make_svc_request<
         T: MethodReqTrait + Serialize,
         X: SvcRespTypeTrait + DeserializeOwned + std::fmt::Debug + 'a,
@@ -110,13 +109,13 @@ impl<'a> RequestCreator<'a> {
         request_data: &T,
     ) -> Result<SvcResponse<X>, RequestCreatorError> {
         #[cfg(feature = "debug-output")]
-        warn!("Url:\n'{}'", url);
+        info!("Url:\n'{}'", url);
 
         let body = serde_json::to_string(&request_data)
             .map_err(RequestCreatorError::SerializationError)?;
 
         #[cfg(feature = "debug-output")]
-        warn!("Body:\n'{}'", body);
+        info!("Body:\n'{}'", body);
 
         let raw_resp = self
             .http_client
@@ -138,7 +137,7 @@ impl<'a> RequestCreator<'a> {
             .map_err(RequestCreatorError::ResponseToStringError)?;
 
         #[cfg(feature = "debug-output")]
-        warn!("Original response body:\n'{}'", &resp_str);
+        info!("Original response body:\n'{}'", &resp_str);
 
         let svc_struct = match serde_json::from_str::<SvcErrorResp>(&resp_str) {
             Ok(r) => SvcResp::Error(r),
@@ -165,12 +164,10 @@ impl<'a> RequestCreator<'a> {
         };
 
         #[cfg(feature = "debug-output")]
-        warn!("Response as object:\n'{:?}'", &svc_struct);
+        info!("Response as object:\n'{:?}'", &svc_struct);
 
         Ok(SvcResponse::new(
             svc_struct,
-            #[cfg(feature = "keep-request-body")]
-            resp_str,
         ))
     }
 }

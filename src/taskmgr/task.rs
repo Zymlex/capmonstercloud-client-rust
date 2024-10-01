@@ -2,6 +2,7 @@ use crate::cfg::limits;
 use crate::cfg::limits::{Limits, LimitsTrait};
 use crate::error::{CMCTaskError, RequestCreatorError, TaskResultError};
 use crate::*;
+use error::{GetTaskError, SvcRespStructError, SvcResponseError};
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -23,11 +24,11 @@ pub(crate) struct CMCTask<
 
     rc: &'a RequestCreator<'a>,
 
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, reason = "hidden")]
     #[doc(hidden)]
     __: PhantomData<T>,
 
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, reason = "hidden")]
     #[doc(hidden)]
     ___: PhantomData<Y>,
 }
@@ -71,13 +72,7 @@ where
 
     pub(crate) async fn get_task_result_in_loop(
         &mut self,
-    ) -> Result<SvcResponse<GetTaskResultResp<Y>>, TaskResultError> {
-        enum State<Y: TaskRespTrait + DeserializeOwned + std::fmt::Debug> {
-            Good(SvcResponse<GetTaskResultResp<Y>>),
-            Repeat,
-            Bad(TaskResultError),
-        }
-
+    ) -> Result<Y, TaskResultError> {
         loop {
             self.add_request_count();
 
@@ -86,28 +81,47 @@ where
                 .getTaskResult::<Y>(self.task_id)
                 .await;
 
-            let state: State<Y> = match resp_result {
+            return match resp_result {
                 Err(e) => match e {
                     RequestCreatorError::NonSuccessResponseStatus(s) => match s {
                         StatusCode::INTERNAL_SERVER_ERROR
                         | StatusCode::BAD_GATEWAY
-                        | StatusCode::SERVICE_UNAVAILABLE => State::Repeat,
+                        | StatusCode::SERVICE_UNAVAILABLE => {
+                            self.check_and_wait_req_interval().await?;
+                            continue;
+                        },
 
-                        _ => State::Bad(TaskResultError::BadStatusCode(s)),
+                        _ => Err(TaskResultError::BadStatusCode(s)),
                     },
-                    _ => State::Bad(TaskResultError::RequestError(e)),
+                    _ => Err(TaskResultError::RequestError(e)),
                 },
-                Ok(resp) => State::Good(resp),
-            };
-
-            return match state {
-                State::Good(r) => Ok(r),
-                State::Repeat => {
-                    self.check_and_wait_req_interval().await?;
-                    continue;
-                }
-                State::Bad(e) => Err(e),
-            };
+                Ok(resp) => {
+                    match resp.get_result() {
+                        Ok(ok) => {
+                            Ok(ok)
+                        },
+                        Err(e) => {
+                            match e {
+                                SvcResponseError::GettingResultError(ref e2) => {
+                                    match e2 {
+                                        SvcRespStructError::GetTaskError(ref e3) => {
+                                            match e3 {
+                                                GetTaskError::Processing => {
+                                                    self.check_and_wait_req_interval().await?;
+                                                    continue;
+                                                }
+                                                _ => return Err(TaskResultError::SvcResponseError(e)),
+                                            }
+                                        }
+                                        _ => return Err(TaskResultError::SvcResponseError(e)),
+                                    }
+                                },
+                                _ => return Err(TaskResultError::SvcResponseError(e)),
+                            }
+                        },
+                    }
+                },
+            }
         }
     }
 
