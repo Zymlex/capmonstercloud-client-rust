@@ -16,6 +16,8 @@
 #![allow(clippy::wildcard_imports, reason = "Dev")]
 #![allow(clippy::module_name_repetitions, reason = "Dev")]
 
+use error::GetUserAgentError;
+
 pub use self::captcha::*;
 
 use self::cfg::Config;
@@ -50,6 +52,13 @@ impl<'a> CapMonsterCloudClient<'a> {
     //         taskmgr: Solver::new(cfg).map_err(ClientImplError)?,
     //     })
     // }
+
+    /// Get the amount of funds on the account.
+    ///
+    /// [Doc](https://docs.capmonster.cloud/docs/api/methods/get-balance)
+    pub async fn get_user_agent_async(&self) -> Result<String, GetUserAgentError> {
+        self.taskmgr.get_user_agent_async().await
+    }
 
     /// Get the amount of funds on the account.
     ///
@@ -99,6 +108,18 @@ impl<'a> CapMonsterCloudClient<'a> {
         self.taskmgr.solve_impl::<_, RecaptchaV2EnterpriseTaskProxylessResp>(data).await.map(|res| res.gRecaptchaResponse)
     }
 
+    // /// [Doc](https://docs.capmonster.cloud/docs/captchas/recaptcha-click)
+    // pub async fn recaptcha_complex(
+    //     &self,
+    //     data: ComplexImageTaskData<'a>,
+    // ) -> Result<<GetTaskResultResp<> as SvcRespTypeTrait>::Value, SolveError> {
+    //     let cit = ComplexImageTask {
+    //         class: "recaptcha",
+    //         data,
+    //     };
+    //     self.taskmgr.solve_impl(cit).await
+    // }
+    
     // /// [Doc](https://docs.capmonster.cloud/docs/captchas/recaptcha-v2-enterprise-task)
     // pub async fn recaptcha_v2_enterprise_proxy(
     //     &self,
@@ -122,6 +143,19 @@ impl<'a> CapMonsterCloudClient<'a> {
     // ) -> Result<SvcResponse<GetTaskResultResp<FunCaptchaTaskProxylessResp>>, SolveError> {
     //     self.taskmgr.solve_impl(data).await
     // }
+    
+    // /// [Doc](???)
+    // pub async fn funcaptcha_complex(
+    //     &self,
+    //     data: ComplexImageTaskData<'a>,
+    // ) -> Result<SvcResponse<GetTaskResultResp<TurnstileTaskProxylessResp>>, SolveError> {
+    //     let data = ComplexImageTask {
+    //         class: "funcaptcha",
+    //         data,
+    //     };
+    //     
+    //     self.taskmgr.solve_impl(data).await
+    // }
 
     // /// [Doc](https://docs.capmonster.cloud/docs/captchas/hcaptcha-task)
     // pub async fn hcaptcha_proxy(
@@ -139,6 +173,16 @@ impl<'a> CapMonsterCloudClient<'a> {
         self.taskmgr.solve_impl::<_, HCaptchaTaskProxylessResp>(data).await.map(|res| res.gRecaptchaResponse)
     }
 
+    // /// [Doc](https://docs.capmonster.cloud/docs/captchas/hcaptcha-click)
+    // pub async fn hcaptcha_complex(
+    //     &self,
+    //     data: ComplexImageTaskData<'a>,
+    // ) -> Result<<GetTaskResultResp<> as SvcRespTypeTrait>::Value, SolveError> {
+    //     let cit = ComplexImageTask {
+    //         class: "hcaptcha",
+    //         data,
+    //     };
+
     // /// [Doc](https://docs.capmonster.cloud/docs/captchas/geetest-task)
     // pub async fn geetest_proxy(
     //     &self,
@@ -155,62 +199,49 @@ impl<'a> CapMonsterCloudClient<'a> {
         self.taskmgr.solve_impl::<_, GeeTestTaskProxylessResp>(data).await
     }
 
-    // /// [Doc](https://docs.capmonster.cloud/docs/captchas/tunrstile-task)
-    // pub async fn turnstile_proxy(
-    //     &self,
-    //     data: CloudFlareChallengeWithProxy<'a>,
-    // ) -> Result<SvcResponse<GetTaskResultResp<TurnstileTaskResp>>, SolveError> {
-    //     self.taskmgr.solve_impl(data).await
-    // }
-
     /// [Doc](https://docs.capmonster.cloud/docs/captchas/tunrstile-task)
     pub async fn turnstile(
         &self,
         data: Turnstile<'a>,
-    ) -> Result<String, SolveError> {
-        self.taskmgr.solve_impl::<_, TurnstileTaskProxylessResp>(data).await.map(|res| res.token)
+    ) -> Result<TurnstileTaskResp, SolveError> {
+        let tt = TurnstileTask {
+            r#type: "TurnstileTaskProxyless",
+            cloudflareTaskType: None,
+            data: TTData::Turnstile(data),
+        };
+
+        self.taskmgr.solve_impl::<_, TurnstileTaskResp>(tt).await
     }
 
-    // /// [Doc](https://docs.capmonster.cloud/docs/captchas/recaptcha-click)
-    // pub async fn recaptcha_complex(
-    //     &self,
-    //     data: ComplexImageTaskData<'a>,
-    // ) -> Result<<GetTaskResultResp<> as SvcRespTypeTrait>::Value, SolveError> {
-    //     let cit = ComplexImageTask {
-    //         class: "recaptcha",
-    //         data,
-    //     };
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/tunrstile-task)
+    pub async fn cloudflare_token(
+        &self,
+        data: CloudFlareToken<'a>,
+    ) -> Result<TurnstileTaskResp, SolveError> {
+        let tt = TurnstileTask {
+            r#type: "TurnstileTaskProxyless",
+            cloudflareTaskType: Some("token"),
+            data: TTData::CloudFlareToken(data),
+        };
 
-    //     self.taskmgr.solve_impl(cit).await
-    // }
+        self.taskmgr.solve_impl::<_, TurnstileTaskResp>(tt).await
+    }
 
-    // /// [Doc](https://docs.capmonster.cloud/docs/captchas/hcaptcha-click)
-    // pub async fn hcaptcha_complex(
-    //     &self,
-    //     data: ComplexImageTaskData<'a>,
-    // ) -> Result<<GetTaskResultResp<> as SvcRespTypeTrait>::Value, SolveError> {
-    //     let cit = ComplexImageTask {
-    //         class: "hcaptcha",
-    //         data,
-    //     };
+    /// [Doc](https://docs.capmonster.cloud/docs/captchas/tunrstile-task)
+    pub async fn cloudflare_cf_clearance(
+        &self,
+        data: CloudFlareCFClearance<'a>,
+    ) -> Result<TurnstileTaskResp, SolveError> {
+        let tt = TurnstileTask {
+            r#type: "TurnstileTask",
+            cloudflareTaskType: Some("cf_clearance"),
+            data: TTData::CloudFlareCFClearance(data),
+        };
 
-    //     self.taskmgr.solve_impl(cit).await
-    // }
-    
-    // /// [Doc](???)
-    // pub async fn funcaptcha_complex(
-    //     &self,
-    //     data: ComplexImageTaskData<'a>,
-    // ) -> Result<SvcResponse<GetTaskResultResp<TurnstileTaskProxylessResp>>, SolveError> {
-    //     let data = ComplexImageTask {
-    //         class: "funcaptcha",
-    //         data,
-    //     };
-    //     
-    //     self.taskmgr.solve_impl(data).await
-    // }
-    
-    /// [Doc](https://docs.capmonster.cloud/docs/captchas/datadome)
+        self.taskmgr.solve_impl::<_, TurnstileTaskResp>(tt).await
+    }
+
+/// [Doc](https://docs.capmonster.cloud/docs/captchas/datadome)
     pub async fn datadome(
         &self,
         data: CustomTaskData<'a>,

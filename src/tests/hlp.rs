@@ -3,6 +3,7 @@ use base64::Engine;
 use std::io::Cursor;
 use std::path::Path;
 use image::ImageFormat;
+use tracing::info;
 
 pub(super) fn image_file_to_base64<P>(path: P, format: ImageFormat) -> String
 where
@@ -15,7 +16,7 @@ where
         .write_to(&mut Cursor::new(&mut bytes), format)
         .unwrap();
 
-    println!("Image size: {}", bytes.capacity());
+    info!("Image size: {}", bytes.capacity());
 
     BASE64_STANDARD.encode(bytes)
 }

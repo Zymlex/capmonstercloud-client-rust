@@ -1,3 +1,4 @@
+use error::GetUserAgentError;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -21,6 +22,18 @@ impl<'a> Solver<'a> {
         })
     }
 
+    pub(crate) async fn get_user_agent_async(
+        &self,
+    ) -> Result<String, GetUserAgentError> {
+        let ua = self
+            .rc
+            .getUserAgent()
+            .await
+            .map_err(GetUserAgentError::RequestError)?;
+
+        Ok(ua)
+    }
+
     pub(crate) async fn get_balance_async(
         &self,
     ) -> Result<<GetBalanceResp as SvcRespTypeTrait>::Value, GetBalanceError> {
@@ -39,7 +52,7 @@ impl<'a> Solver<'a> {
     >(
         &self,
         data: T,
-    ) -> Result<<GetTaskResultResp<Y> as SvcRespTypeTrait>::Value, SolveError>
+    ) -> Result<Y, SolveError>
     where
         Limits<T>: LimitsTrait,
     {

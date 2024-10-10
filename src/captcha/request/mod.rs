@@ -47,6 +47,50 @@ impl<'a> RequestCreator<'a> {
         })
     }
 
+    pub(crate) async fn getUserAgent(&self) -> Result<String, RequestCreatorError> {
+        let url = self.urls.user_agent.clone();
+
+        #[cfg(feature = "debug-output")]
+        info!("Url:\n{}", url);
+
+        let raw_resp = self
+            .http_client
+            .get(url)
+            .send()
+            .await
+            .map_err(RequestCreatorError::GetRequestError)?;
+
+        let resp_status = raw_resp.status();
+
+        if resp_status != StatusCode::OK {
+            return Err(RequestCreatorError::NonSuccessResponseStatus(resp_status));
+        }
+
+        let resp_str = raw_resp
+            .text()
+            .await
+            .map_err(RequestCreatorError::ResponseToStringError)?;
+
+        #[cfg(feature = "debug-output")]
+        info!("Original response body:\n{}", &resp_str);
+
+        Ok(resp_str)
+    }
+
+    pub(crate) async fn getBalance(
+        &self,
+    ) -> Result<SvcResponse<GetBalanceResp>, RequestCreatorError> {
+        let request_data = GetBalance {
+            clientKey: self.client_key,
+        };
+
+        let result = self
+            .make_svc_post_request::<GetBalance, GetBalanceResp>(&self.urls.balance, &request_data)
+            .await?;
+
+        Ok(result)
+    }
+
     pub(crate) async fn createTask<T: TaskReqTrait + Serialize>(
         &self,
         task_body: T,
@@ -58,7 +102,7 @@ impl<'a> RequestCreator<'a> {
         };
 
         let resp_obj = self
-            .make_svc_request::<CreateTask<'a, T>, TaskIdResp>(
+            .make_svc_post_request::<CreateTask<'a, T>, TaskIdResp>(
                 &self.urls.task_creation,
                 &request_data,
             )
@@ -74,7 +118,7 @@ impl<'a> RequestCreator<'a> {
         taskId: u32,
     ) -> Result<SvcResponse<GetTaskResultResp<Y>>, RequestCreatorError> {
         let result = self
-            .make_svc_request::<GetTaskResult, GetTaskResultResp<Y>>(
+            .make_svc_post_request::<GetTaskResult, GetTaskResultResp<Y>>(
                 &self.urls.task_result,
                 &GetTaskResult {
                     clientKey: self.client_key,
@@ -86,21 +130,7 @@ impl<'a> RequestCreator<'a> {
         Ok(result)
     }
 
-    pub(crate) async fn getBalance(
-        &self,
-    ) -> Result<SvcResponse<GetBalanceResp>, RequestCreatorError> {
-        let request_data = GetBalance {
-            clientKey: self.client_key,
-        };
-
-        let result = self
-            .make_svc_request::<GetBalance, GetBalanceResp>(&self.urls.balance, &request_data)
-            .await?;
-
-        Ok(result)
-    }
-
-    async fn make_svc_request<
+    async fn make_svc_post_request<
         T: MethodReqTrait + Serialize,
         X: SvcRespTypeTrait + DeserializeOwned + std::fmt::Debug + 'a,
     >(
@@ -109,13 +139,13 @@ impl<'a> RequestCreator<'a> {
         request_data: &T,
     ) -> Result<SvcResponse<X>, RequestCreatorError> {
         #[cfg(feature = "debug-output")]
-        info!("Url:\n'{}'", url);
+        info!("Url:\n{}", url);
 
         let body = serde_json::to_string(&request_data)
             .map_err(RequestCreatorError::SerializationError)?;
 
         #[cfg(feature = "debug-output")]
-        info!("Body:\n'{}'", body);
+        info!("Body:\n{}", body);
 
         let raw_resp = self
             .http_client
@@ -137,7 +167,7 @@ impl<'a> RequestCreator<'a> {
             .map_err(RequestCreatorError::ResponseToStringError)?;
 
         #[cfg(feature = "debug-output")]
-        info!("Original response body:\n'{}'", &resp_str);
+        info!("Original response body:\n{}", &resp_str);
 
         let svc_struct = match serde_json::from_str::<SvcErrorResp>(&resp_str) {
             Ok(r) => SvcResp::Error(r),
@@ -164,7 +194,7 @@ impl<'a> RequestCreator<'a> {
         };
 
         #[cfg(feature = "debug-output")]
-        info!("Response as object:\n'{:?}'", &svc_struct);
+        info!("Response as object:\n{:?}", &svc_struct);
 
         Ok(SvcResponse::new(
             svc_struct,

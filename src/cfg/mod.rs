@@ -1,6 +1,6 @@
 use reqwest::Url;
 
-use crate::error::OptionsError::{self, UrlParseError};
+use crate::error::OptionsError::{self, UrlParseError, UrlsError};
 use self::urls::Urls;
 
 pub mod urls;
@@ -12,17 +12,19 @@ pub struct Config<'a> {
 }
 
 impl<'a> Config<'a> {
-    const API_URI: &'a str = "https://api.capmonster.cloud";
+    const SOLVING_API_URI: &'a str = "https://api.capmonster.cloud";
+    const SITE_API_URI   : &'a str = "https://capmonster.cloud/api/";
 
     pub(crate) const SOFT_ID: &'a str = "60";
 
     pub fn new(client_key: &'a str) -> Result<Self, OptionsError>
     {
-        let url = Url::parse(Self::API_URI).map_err(|e| UrlParseError(e.to_string()))?;
+        let solving_api_uri = Url::parse(Self::SOLVING_API_URI).map_err(|e| UrlParseError(e.to_string()))?;
+        let site_api_uri = Url::parse(Self::SITE_API_URI).map_err(|e| UrlParseError(e.to_string()))?;
 
         Ok(Self {
             client_key,
-            urls: Urls::from(&url),
+            urls: Urls::from(&solving_api_uri, &site_api_uri).map_err(UrlsError)?,
         })
     }
 }

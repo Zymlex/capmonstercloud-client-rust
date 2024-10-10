@@ -10,6 +10,12 @@ pub enum CapMonsterCloudClientError {
 #[derive(Debug)]
 pub enum OptionsError {
     UrlParseError(String), // 'String' because `url::parser::ParseError` requires explicit crate in dependencies
+    UrlsError(UrlsError), // 'String' because `url::parser::ParseError` requires explicit crate in dependencies
+}
+
+#[derive(Debug)]
+pub enum UrlsError {
+    UrlParseError(String), // 'String' because `url::parser::ParseError` requires explicit crate in dependencies
 }
 
 impl From<OptionsError> for CapMonsterCloudClientError {
@@ -29,6 +35,7 @@ pub enum SvcResponseError {
 #[derive(Debug)]
 pub enum RequestCreatorError {
     HttpClientCreationError(reqwest::Error),
+    GetRequestError(reqwest::Error),
     PostRequestError(reqwest::Error),
     NonSuccessResponseStatus(StatusCode),
     ResponseToStringError(reqwest::Error),
@@ -42,6 +49,12 @@ pub enum SvcRespStructError {
     _ReportBug,
     _ReportBugSuccessResponseWithoutData,
     GetTaskError(GetTaskError)
+}
+
+#[derive(Debug)]
+pub enum GetUserAgentError {
+    RequestError(RequestCreatorError),
+    SvcResponseError(SvcResponseError),
 }
 
 #[derive(Debug)]
