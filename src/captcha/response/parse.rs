@@ -1,12 +1,12 @@
 use std::num::NonZeroU8;
 
-use serde::{Deserialize, Deserializer};
 use serde::de::Unexpected;
+use serde::{Deserialize, Deserializer};
 
 pub(crate) fn check_success_errorId<'de, D: Deserializer<'de>>(de: D) -> Result<(), D::Error> {
     let num = <u8 as Deserialize<'de>>::deserialize(de)?;
-    
-    #[allow(clippy::if_not_else)]
+
+    #[allow(clippy::if_not_else, reason = "Readability")]
     if num == 0 {
         Ok(())
     } else {
@@ -17,18 +17,19 @@ pub(crate) fn check_success_errorId<'de, D: Deserializer<'de>>(de: D) -> Result<
     }
 }
 
-pub(crate) fn check_failure_errorId<'de, D: Deserializer<'de>>(de: D) -> Result<NonZeroU8, D::Error> {
+pub(crate) fn check_failure_errorId<'de, D: Deserializer<'de>>(
+    de: D,
+) -> Result<NonZeroU8, D::Error> {
     let num = <u8 as Deserialize<'de>>::deserialize(de)?;
-    
-    NonZeroU8::new(num).ok_or(serde::de::Error::invalid_value(
-        Unexpected::Unsigned(u64::from(num)),
-        &"not 0",
-    ))
+
+    NonZeroU8::new(num).ok_or_else(|| {
+        serde::de::Error::invalid_value(Unexpected::Unsigned(u64::from(num)), &"not 0")
+    })
 }
 
 pub(crate) fn check_processing_status<'de, D: Deserializer<'de>>(de: D) -> Result<(), D::Error> {
     let num = <&'de str as Deserialize<'de>>::deserialize(de)?;
-    
+
     if num == "processing" {
         Ok(())
     } else {

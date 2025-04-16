@@ -1,35 +1,45 @@
+use cfg::urls::Urls;
+use cfg::{APIRootUrls, Settings};
 use error::GetUserAgentError;
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 
-use crate::cfg::Config;
-use crate::error::{GetBalanceError, RequestCreatorError};
 use self::task::CMCTask;
-use crate::*;
 use crate::cfg::limits::{Limits, LimitsTrait};
+use crate::error::{GetBalanceError, RequestCreatorError};
+use crate::*;
 
 mod task;
 mod timeouts;
+
+const FIXED_SETTINGS: Settings = Settings {
+    api_roots: &APIRootUrls {
+        solving: "https://api.capmonster.cloud",
+        site: "https://capmonster.cloud/api/",
+    },
+
+    soft_id: "60",
+};
 
 pub(crate) struct Solver<'a> {
     rc: RequestCreator<'a>,
 }
 
 impl<'a> Solver<'a> {
-    pub(crate) fn new(cfg: Config<'a>) -> Result<Self, RequestCreatorError> {
+    pub(crate) fn new(client_key: &'a str) -> Result<Self, RequestCreatorError> {
+        let urls = Urls::new(&FIXED_SETTINGS.api_roots).map_err(RequestCreatorError::Urls)?;
+
         Ok(Self {
-            rc: RequestCreator::new(cfg.client_key, cfg.urls)?,
+            rc: RequestCreator::new(urls, FIXED_SETTINGS.soft_id, client_key)?,
         })
     }
 
-    pub(crate) async fn get_user_agent_async(
-        &self,
-    ) -> Result<String, GetUserAgentError> {
+    pub(crate) async fn get_user_agent_async(&self) -> Result<String, GetUserAgentError> {
         let ua = self
             .rc
             .getUserAgent()
             .await
-            .map_err(GetUserAgentError::RequestError)?;
+            .map_err(GetUserAgentError::Request)?;
 
         Ok(ua)
     }
@@ -41,13 +51,13 @@ impl<'a> Solver<'a> {
             .rc
             .getBalance()
             .await
-            .map_err(GetBalanceError::RequestError)?;
+            .map_err(GetBalanceError::Request)?;
 
-        Ok(resp_obj.get_result().map_err(GetBalanceError::SvcResponseError)?)
+        resp_obj.get_result().map_err(GetBalanceError::SvcResponse)
     }
 
     pub(crate) async fn solve_impl<
-        T: TaskReqTrait + Serialize + 'a,
+        T: TaskReqTrait + Serialize + Send + Sync + 'a,
         Y: TaskRespTrait + DeserializeOwned + std::fmt::Debug + 'a,
     >(
         &self,
@@ -58,13 +68,27 @@ impl<'a> Solver<'a> {
     {
         let mut task = CMCTask::<T, Y>::new(&self.rc, data)
             .await
-            .map_err(SolveError::TaskCreationError)?;
+            .map_err(SolveError::TaskCreation)?;
 
         let res = task
             .get_task_result_in_loop()
             .await
-            .map_err(SolveError::GetTaskResultErrorInLoop)?;
+            .map_err(SolveError::GetTaskResultInLoop)?;
 
         Ok(res)
+    }
+}
+
+#[cfg(test)]
+impl<'a> Solver<'a> {
+    pub(crate) fn new_for_tests(
+        api_roots: &'a APIRootUrls<'a>,
+        client_key: &'a str,
+    ) -> Result<Self, RequestCreatorError> {
+        let urls = Urls::new(api_roots).map_err(RequestCreatorError::Urls)?;
+
+        Ok(Self {
+            rc: RequestCreator::new(urls, FIXED_SETTINGS.soft_id, client_key)?,
+        })
     }
 }

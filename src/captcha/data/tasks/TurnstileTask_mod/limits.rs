@@ -1,5 +1,5 @@
-use crate::cfg::limits::{request_interval_ms, result_timeout_ms, Limits, LimitsTrait};
-use crate::{TurnstileTask};
+use crate::TurnstileTask;
+use crate::cfg::limits::{Limits, LimitsTrait, request_interval_ms, result_timeout_ms};
 use std::time::Duration;
 
 impl<'a> LimitsTrait for Limits<TurnstileTask<'a>> {

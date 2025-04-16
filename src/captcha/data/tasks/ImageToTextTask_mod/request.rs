@@ -14,4 +14,5 @@ pub struct ImageToTextTask<'a> {
     pub Case: Option<bool>,
     pub numeric: Option<u8>,
     pub math: Option<bool>,
+    pub websiteUrl: &'a str,
 }

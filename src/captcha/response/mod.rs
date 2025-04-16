@@ -1,12 +1,15 @@
-#![allow(non_snake_case)]
+#![allow(non_snake_case, reason = "API")]
 
 mod parse;
 
-use serde::de::DeserializeOwned;
 use serde::Deserialize;
-use std::{fmt::{Debug, Display, Formatter}, num::NonZeroU8};
+use serde::de::DeserializeOwned;
+use std::{
+    fmt::{Debug, Display, Formatter},
+    num::NonZeroU8,
+};
 
-use crate::error::{SvcResponseError, SvcRespStructError};
+use crate::error::{SvcRespStructError, SvcResponseError};
 
 #[derive(Debug, Clone)]
 pub struct SvcResponse<X: SvcRespTypeTrait + DeserializeOwned> {
@@ -14,22 +17,13 @@ pub struct SvcResponse<X: SvcRespTypeTrait + DeserializeOwned> {
 }
 
 impl<X: SvcRespTypeTrait + DeserializeOwned> SvcResponse<X> {
-    pub const fn new(
-        svc_struct: SvcResp<X>,
-    ) -> Self {
-        Self {
-            resp: svc_struct,
-        }
+    pub const fn new(svc_struct: SvcResp<X>) -> Self {
+        Self { resp: svc_struct }
     }
 
-    pub fn get_result(&self) -> Result<X::Value, SvcResponseError>
-    {
+    pub fn get_result(&self) -> Result<X::Value, SvcResponseError> {
         match &self.resp {
-            SvcResp::Success(r) => r.get_result().map_err(|e| {
-                SvcResponseError::GettingResultError(
-                    e,
-                )
-            }),
+            SvcResp::Success(r) => r.get_result().map_err(SvcResponseError::GettingResult),
             SvcResp::Error(e) => Err(SvcResponseError::SvcReturnErrorCode(e.clone())),
         }
     }
@@ -58,15 +52,13 @@ pub enum SvcResp<X: SvcRespTypeTrait> {
 pub struct SvcSuccessResp<X: SvcRespTypeTrait> {
     /// Always 0 and required only for easy check.
     #[serde(deserialize_with = "parse::check_success_errorId")]
-    #[allow(dead_code)]
     #[doc(hidden)]
     errorId: (),
     #[serde(flatten)]
     flat_data: Option<X>,
 }
 
-impl<X: SvcRespTypeTrait + DeserializeOwned> SvcSuccessResp<X>
-{
+impl<X: SvcRespTypeTrait + DeserializeOwned> SvcSuccessResp<X> {
     pub(crate) fn get_result(&self) -> Result<X::Value, SvcRespStructError> {
         match &self.flat_data {
             Some(r) => Ok(r.get_result()?),

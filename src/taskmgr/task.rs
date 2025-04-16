@@ -4,8 +4,8 @@ use crate::error::{CMCTaskError, RequestCreatorError, TaskResultError};
 use crate::*;
 use error::{GetTaskError, SvcRespStructError, SvcResponseError};
 use reqwest::StatusCode;
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use std::marker::PhantomData;
 use std::time::{Duration, Instant};
 use tokio::time::sleep;
@@ -24,20 +24,17 @@ pub(crate) struct CMCTask<
 
     rc: &'a RequestCreator<'a>,
 
-    #[allow(non_snake_case, reason = "hidden")]
+    #[allow(non_snake_case, reason = "PhantomData")]
     #[doc(hidden)]
     __: PhantomData<T>,
 
-    #[allow(non_snake_case, reason = "hidden")]
+    #[allow(non_snake_case, reason = "PhantomData")]
     #[doc(hidden)]
     ___: PhantomData<Y>,
 }
 
-impl<
-        'a,
-        T: TaskReqTrait + Serialize,
-        Y: TaskRespTrait + DeserializeOwned + std::fmt::Debug + 'a,
-    > CMCTask<'a, T, Y>
+impl<'a, T: TaskReqTrait + Serialize, Y: TaskRespTrait + DeserializeOwned + std::fmt::Debug + 'a>
+    CMCTask<'a, T, Y>
 where
     Limits<T>: LimitsTrait,
 {
@@ -51,11 +48,11 @@ where
         let resp = rc
             .createTask(task_body)
             .await
-            .map_err(CMCTaskError::TaskCreationError)?;
+            .map_err(CMCTaskError::TaskCreation)?;
 
         let task_id = resp
             .get_result()
-            .map_err(CMCTaskError::CreateTaskGetResultError)?;
+            .map_err(CMCTaskError::CreateTaskGetResult)?;
 
         Ok(Self {
             task_id,
@@ -70,16 +67,11 @@ where
         })
     }
 
-    pub(crate) async fn get_task_result_in_loop(
-        &mut self,
-    ) -> Result<Y, TaskResultError> {
+    pub(crate) async fn get_task_result_in_loop(&mut self) -> Result<Y, TaskResultError> {
         loop {
             self.add_request_count();
 
-            let resp_result = self
-                .rc
-                .getTaskResult::<Y>(self.task_id)
-                .await;
+            let resp_result = self.rc.getTaskResult::<Y>(self.task_id).await;
 
             return match resp_result {
                 Err(e) => match e {
@@ -89,39 +81,25 @@ where
                         | StatusCode::SERVICE_UNAVAILABLE => {
                             self.check_and_wait_req_interval().await?;
                             continue;
-                        },
+                        }
 
                         _ => Err(TaskResultError::BadStatusCode(s)),
                     },
-                    _ => Err(TaskResultError::RequestError(e)),
+                    _ => Err(TaskResultError::Request(e)),
                 },
-                Ok(resp) => {
-                    match resp.get_result() {
-                        Ok(ok) => {
-                            Ok(ok)
-                        },
-                        Err(e) => {
-                            match e {
-                                SvcResponseError::GettingResultError(ref e2) => {
-                                    match e2 {
-                                        SvcRespStructError::GetTaskError(ref e3) => {
-                                            match e3 {
-                                                GetTaskError::Processing => {
-                                                    self.check_and_wait_req_interval().await?;
-                                                    continue;
-                                                }
-                                                _ => return Err(TaskResultError::SvcResponseError(e)),
-                                            }
-                                        }
-                                        _ => return Err(TaskResultError::SvcResponseError(e)),
-                                    }
-                                },
-                                _ => return Err(TaskResultError::SvcResponseError(e)),
-                            }
-                        },
-                    }
+                Ok(resp) => match resp.get_result() {
+                    Ok(ok) => Ok(ok),
+                    Err(e) => match e {
+                        SvcResponseError::GettingResult(SvcRespStructError::GetTaskError(
+                            GetTaskError::Processing,
+                        )) => {
+                            self.check_and_wait_req_interval().await?;
+                            continue;
+                        }
+                        _ => return Err(TaskResultError::SvcResponse(e)),
+                    },
                 },
-            }
+            };
         }
     }
 

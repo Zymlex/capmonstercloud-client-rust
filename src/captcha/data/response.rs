@@ -50,10 +50,14 @@ impl<'a, Y: TaskRespTrait + 'a> SvcRespTypeTrait for GetTaskResultResp<Y> {
                 if let Some(r) = &self.solution {
                     Ok(r.clone())
                 } else {
-                    Err(SvcRespStructError::GetTaskError(GetTaskError::ReadyTaskWithoutSolution))
+                    Err(SvcRespStructError::GetTaskError(
+                        GetTaskError::ReadyTaskWithoutSolution,
+                    ))
                 }
             }
-            TaskState::processing => Err(SvcRespStructError::GetTaskError(GetTaskError::Processing)),
+            TaskState::processing => {
+                Err(SvcRespStructError::GetTaskError(GetTaskError::Processing))
+            }
         }
     }
 }

@@ -8,7 +8,7 @@ impl<'a> TaskReqTrait for TurnstileTask<'a> {}
 
 #[skip_serializing_none]
 #[derive(Serialize, Clone, Debug)]
-pub(crate)  struct TurnstileTask<'a> {
+pub(crate) struct TurnstileTask<'a> {
     pub r#type: &'a str,
 
     #[serde(flatten)]

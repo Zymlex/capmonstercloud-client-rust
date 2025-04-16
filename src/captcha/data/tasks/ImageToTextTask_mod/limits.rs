@@ -1,5 +1,5 @@
-use crate::cfg::limits::{Limits, LimitsTrait};
 use crate::ImageToTextTask;
+use crate::cfg::limits::{Limits, LimitsTrait};
 use std::time::Duration;
 
 impl<'a> LimitsTrait for Limits<ImageToTextTask<'a>> {

@@ -34,7 +34,7 @@ pub(crate) mod result_timeout_ms {
 }
 
 pub(crate) struct Limits<T: TaskReqTrait> {
-    #[allow(non_snake_case, reason = "hidden")]
+    #[allow(non_snake_case, reason = "PhantomData")]
     #[doc(hidden)]
     __: PhantomData<T>,
 }

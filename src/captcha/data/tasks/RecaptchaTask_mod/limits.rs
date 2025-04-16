@@ -1,4 +1,4 @@
-use crate::cfg::limits::{request_interval_ms, result_timeout_ms, Limits, LimitsTrait};
+use crate::cfg::limits::{Limits, LimitsTrait, request_interval_ms, result_timeout_ms};
 use crate::{
     RecaptchaV2EnterpriseTaskProxyless, RecaptchaV2TaskProxyless, RecaptchaV3TaskProxyless,
 };

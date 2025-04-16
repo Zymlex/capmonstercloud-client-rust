@@ -1,6 +1,6 @@
+use crate::TaskReqTrait;
 use serde::Serialize;
 use serde_with_macros::skip_serializing_none;
-use crate::TaskReqTrait;
 
 impl<'a> TaskReqTrait for AmazonTaskProxyless<'a> {}
 

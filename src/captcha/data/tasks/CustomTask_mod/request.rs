@@ -1,6 +1,6 @@
+use crate::TaskReqTrait;
 use serde::Serialize;
 use serde_with_macros::skip_serializing_none;
-use crate::TaskReqTrait;
 
 impl<'a> TaskReqTrait for CustomTask<'a> {}
 
@@ -9,7 +9,7 @@ impl<'a> TaskReqTrait for CustomTask<'a> {}
 #[serde(tag = "type")]
 pub(crate) struct CustomTask<'a> {
     pub(crate) class: &'a str,
-    
+
     #[serde(flatten)]
     pub data: CustomTaskData<'a>,
 }

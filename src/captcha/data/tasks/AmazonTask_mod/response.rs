@@ -1,5 +1,5 @@
-use serde::Deserialize;
 use crate::TaskRespTrait;
+use serde::Deserialize;
 
 impl TaskRespTrait for AmazonTaskProxylessResp {}
 

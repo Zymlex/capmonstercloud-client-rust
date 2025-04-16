@@ -4,31 +4,31 @@
 
 // private items shadows public glob re-export
 
-mod ImageToTextTask_mod;
-mod RecaptchaTask_mod;
-mod FunCaptchaTask_mod;
-mod HCaptchaTask_mod;
-mod GeeTestTask_mod;
-mod TurnstileTask_mod;
+mod AmazonTask_mod;
 mod ComplexImageTask_mod;
 mod CustomTask_mod;
-mod AmazonTask_mod;
+mod FunCaptchaTask_mod;
+mod GeeTestTask_mod;
+mod HCaptchaTask_mod;
+mod ImageToTextTask_mod;
+mod RecaptchaTask_mod;
+mod TurnstileTask_mod;
 
-pub use self::ImageToTextTask_mod::*;
-pub use self::RecaptchaTask_mod::*;
-pub use self::FunCaptchaTask_mod::*;
-pub use self::HCaptchaTask_mod::*;
-pub use self::GeeTestTask_mod::*;
-pub use self::TurnstileTask_mod::*;
+pub use self::AmazonTask_mod::*;
 pub use self::ComplexImageTask_mod::*;
 pub use self::CustomTask_mod::*;
-pub use self::AmazonTask_mod::*;
+pub use self::FunCaptchaTask_mod::*;
+pub use self::GeeTestTask_mod::*;
+pub use self::HCaptchaTask_mod::*;
+pub use self::ImageToTextTask_mod::*;
+pub use self::RecaptchaTask_mod::*;
+pub use self::TurnstileTask_mod::*;
 
 use serde::Serialize;
 use serde_with_macros::skip_serializing_none;
 use std::fmt::Debug;
 
-pub trait TaskReqTrait: Clone + Debug {}
+pub trait TaskReqTrait: Clone + Debug + Send + Sync + Serialize {}
 pub trait TaskRespTrait: Clone + Debug {}
 
 #[skip_serializing_none]
@@ -47,7 +47,7 @@ pub enum ProxyType {
     Http,
     Https,
     Socks4,
-    Socks5
+    Socks5,
 }
 
 #[rustfmt::skip]

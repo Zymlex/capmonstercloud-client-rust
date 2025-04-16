@@ -1,5 +1,5 @@
-use serde::Deserialize;
 use crate::*;
+use serde::Deserialize;
 
 impl TaskRespTrait for GeeTestTaskResp {}
 impl TaskRespTrait for GeeTestTaskProxylessResp {}

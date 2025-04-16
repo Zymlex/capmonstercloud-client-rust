@@ -1,31 +1,31 @@
 #![cfg(test)]
 #![allow(non_snake_case, reason = "API")]
 
+mod alt;
 mod hlp;
+mod rt;
 
 use crate::*;
+use cfg::APIRootUrls;
 use hlp::image_file_to_base64;
 use image::ImageFormat;
-use tokio::sync::OnceCell;
 use tracing::info;
 
-const CLIENT_KEY: &str = env!("CMC_KEY");
+const IP_PORT: &str = "127.0.0.1:8080";
 
-static CELL: OnceCell<(CapMonsterCloudClient, String)> = OnceCell::const_new();
+// todo: macros for IP_PORT
+const API_ROOTS: APIRootUrls = APIRootUrls {
+    solving: concat!("http://", "127.0.0.1:8080", "/"),
+    site: concat!("http://", "127.0.0.1:8080", "/api", "/"), // last '/' is important for url join
+};
 
-async fn get_client_and_ua<'a>() -> &'a (CapMonsterCloudClient<'a>, String) {
-    CELL.get_or_init(|| async {
-        tracing_subscriber::fmt::init();
-        let cmc = CapMonsterCloudClient::new(CLIENT_KEY).unwrap();
-        let ua = cmc.get_user_agent_async().await.unwrap();
+const CLIENT_KEY: &str = "00000";
 
-        (cmc, ua)
-    }).await
-}
+const CLIENT_KEY_WRONG: &str = "11111";
 
 #[tokio::test]
 async fn get_balance_async_check() {
-    let (cmc, _) = get_client_and_ua().await;
+    let (cmc, _) = rt::init_all_and_get_client_with_ua().await;
 
     let result = cmc.get_balance_async().await.unwrap();
 
@@ -35,9 +35,9 @@ async fn get_balance_async_check() {
 
 #[tokio::test]
 async fn image_to_text_task_check() {
-    let (cmc, _) = get_client_and_ua().await;
-
     let base64 = image_file_to_base64("src/tests/media/captcha_for_ITT.png", ImageFormat::Png);
+
+    let (cmc, _) = rt::init_all_and_get_client_with_ua().await;
 
     let text = cmc
         .image_to_text(ImageToTextTask {
@@ -54,62 +54,13 @@ async fn image_to_text_task_check() {
 
 #[tokio::test]
 async fn recaptcha_v2_task_proxyless_check() {
-    let (cmc, ua) = get_client_and_ua().await;
-
-    let gRecaptchaResponse = cmc.recaptcha_v2(RecaptchaV2TaskProxyless {
-        websiteURL: "https://lessons.zennolab.com/captchas/recaptcha/v2_nosubmit.php?level=high",
-        websiteKey: "6Lcg7CMUAAAAANphynKgn9YAgA4tQ2KI_iqRyTwd",
-        userAgent: Some(ua),
-        ..Default::default()
-    }).await.unwrap();
-
-    info!("{gRecaptchaResponse}");
-
-    assert!(!gRecaptchaResponse.is_empty());
-}
-
-#[tokio::test]
-async fn recaptcha_v3_task_proxyless_check() {
-    let (cmc, _) = get_client_and_ua().await;
-
-    let gRecaptchaResponse = cmc.recaptcha_v3(RecaptchaV3TaskProxyless {
-        websiteURL: "https://lessons.zennolab.com/captchas/recaptcha/v3.php?level=beta",
-        websiteKey: "6Le0xVgUAAAAAIt20XEB4rVhYOODgTl00d8juDob",
-        minScore: Some(0.3),
-        pageAction: Some("myverify"),
-        ..Default::default()
-    }).await.unwrap();
-
-    info!("{gRecaptchaResponse}");
-
-    assert!(!gRecaptchaResponse.is_empty());
-}
-
-#[tokio::test]
-async fn recaptcha_v2_enterprise_task_proxyless_check() {
-    let (cmc, ua) = get_client_and_ua().await;
-
-    let gRecaptchaResponse = cmc.recaptcha_v2_enterprise(RecaptchaV2EnterpriseTaskProxyless{
-        websiteURL: "https://cabura.salon/",
-        websiteKey: "6LeelqAUAAAAANC5GR_WWHaMeDH45EPA6gTZ1WAk",
-        enterprisePayload: None,
-        userAgent: Some(ua),
-        ..Default::default()
-    }).await.unwrap();
-
-    info!("{gRecaptchaResponse}");
-
-    assert!(!gRecaptchaResponse.is_empty());
-}
-
-#[tokio::test]
-async fn hcaptcha_task_proxyless_check() {
-    let (cmc, ua) = get_client_and_ua().await;
+    let (cmc, ua) = rt::init_all_and_get_client_with_ua().await;
 
     let gRecaptchaResponse = cmc
-        .hcaptcha(HCaptchaTaskProxyless {
-            websiteURL: "https://lessons.zennolab.com/captchas/hcaptcha/?level=alwayson",
-            websiteKey: "9730e4be-0997-4abd-aef3-bbdd241d211c",
+        .recaptcha_v2(RecaptchaV2TaskProxyless {
+            websiteURL:
+                "https://lessons.zennolab.com/captchas/recaptcha/v2_nosubmit.php?level=high",
+            websiteKey: "6Lcg7CMUAAAAANphynKgn9YAgA4tQ2KI_iqRyTwd",
             userAgent: Some(ua),
             ..Default::default()
         })
@@ -122,8 +73,48 @@ async fn hcaptcha_task_proxyless_check() {
 }
 
 #[tokio::test]
+async fn recaptcha_v3_task_proxyless_check() {
+    let (cmc, _) = rt::init_all_and_get_client_with_ua().await;
+
+    let g_recaptcha_response = cmc
+        .recaptcha_v3(RecaptchaV3TaskProxyless {
+            websiteURL: "https://lessons.zennolab.com/captchas/recaptcha/v3.php?level=beta",
+            websiteKey: "6Le0xVgUAAAAAIt20XEB4rVhYOODgTl00d8juDob",
+            minScore: Some(0.3),
+            pageAction: Some("myverify"),
+            ..Default::default()
+        })
+        .await
+        .unwrap();
+
+    info!("{g_recaptcha_response}");
+
+    assert!(!g_recaptcha_response.is_empty());
+}
+
+#[tokio::test]
+async fn recaptcha_v2_enterprise_task_proxyless_check() {
+    let (cmc, ua) = rt::init_all_and_get_client_with_ua().await;
+
+    let g_recaptcha_response = cmc
+        .recaptcha_v2_enterprise(RecaptchaV2EnterpriseTaskProxyless {
+            websiteURL: "https://cabura.salon/",
+            websiteKey: "6LeelqAUAAAAANC5GR_WWHaMeDH45EPA6gTZ1WAk",
+            enterprisePayload: None,
+            userAgent: Some(ua),
+            ..Default::default()
+        })
+        .await
+        .unwrap();
+
+    info!("{g_recaptcha_response}");
+
+    assert!(!g_recaptcha_response.is_empty());
+}
+
+#[tokio::test]
 async fn geetest_task_proxyless_check() {
-    let (cmc, ua) = get_client_and_ua().await;
+    let (cmc, ua) = rt::init_all_and_get_client_with_ua().await;
 
     let result = cmc
         .geetest(GeeTestTaskProxyless {
@@ -145,7 +136,7 @@ async fn geetest_task_proxyless_check() {
 
 #[tokio::test]
 async fn turnstile_check() {
-    let (cmc, _) = get_client_and_ua().await;
+    let (cmc, _) = rt::init_all_and_get_client_with_ua().await;
 
     let result = cmc
         .turnstile(Turnstile {
@@ -164,7 +155,7 @@ async fn turnstile_check() {
 
 // #[tokio::test]
 // async fn cloudflare_token_check() {
-//     let (cmc, ua) = get_client_and_ua().await;
+//     let (cmc, ua) = rt::init_all_and_get_client_with_ua().await;
 
 //     let result = cmc
 //         .cloudflare_token(CloudFlareToken {
@@ -186,7 +177,7 @@ async fn turnstile_check() {
 
 // #[tokio::test]
 // async fn funcaptcha_task_proxyless_check() {
-//     let (cmc, ua) = get_client();
+//     let (cmc, ua) = rt::init_all_and_get_client_with_ua().await;
 //
 //     let obj = cmc.funcaptcha(FunCaptchaTaskProxylessReq {
 //         websiteURL: "",

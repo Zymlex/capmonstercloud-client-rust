@@ -1,5 +1,4 @@
-#![allow(non_camel_case_types, reason = "API")]
-#![allow(clippy::upper_case_acronyms, reason = "API")]
+#![allow(non_camel_case_types, clippy::upper_case_acronyms, reason = "API")]
 
 use serde::Serialize;
 
@@ -19,14 +18,15 @@ pub enum ITT_Modules {
     STEAM,
     VK,
     VK_RUS,
- // YANDEX,
- // YANDEX_NEW,
- // YANDEX_WAVE,
+    YANDEX,
+    YANDEX_NEW,
+    YANDEX_WAVE,
     UNIVERSAL,
 }
 
 impl<'a> From<ITT_Modules> for &'a str {
     fn from(value: ITT_Modules) -> Self {
+        #[rustfmt::skip]
         match value {
             ITT_Modules::AMAZON      => "amazon",
             ITT_Modules::BOT_DETECT  => "botdetect",
@@ -42,9 +42,9 @@ impl<'a> From<ITT_Modules> for &'a str {
             ITT_Modules::STEAM       => "steam",
             ITT_Modules::VK          => "vk",
             ITT_Modules::VK_RUS      => "vk_rus",
-         // ITT_Modules::YANDEX      => "yandex",
-         // ITT_Modules::YANDEX_NEW  => "yandexnew",
-         // ITT_Modules::YANDEX_WAVE => "yandexwave",
+            ITT_Modules::YANDEX      => "yandex",
+            ITT_Modules::YANDEX_NEW  => "yandexnew",
+            ITT_Modules::YANDEX_WAVE => "yandexwave",
             ITT_Modules::UNIVERSAL   => "universal",
         }
     }
